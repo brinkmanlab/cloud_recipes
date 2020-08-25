@@ -2,7 +2,7 @@
 module "vpc" { # https://github.com/terraform-aws-modules/terraform-aws-vpc/
   source = "terraform-aws-modules/vpc/aws"
 
-  name = "irida-vpc${local.name_suffix}"
+  name = "${var.cluster_name}${local.name_suffix}"
   cidr = "10.0.0.0/16"
 
   azs = data.aws_availability_zones.available.names
