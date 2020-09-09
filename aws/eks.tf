@@ -62,13 +62,13 @@ module "eks" {
   worker_groups_launch_template = [
     # https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/spot-instances.md#using-launch-templates
     {
-      name                 = "compute"
-      instance_type        = local.instance_types
-      spot_instance_pools  = length(local.instance_types)
-      asg_min_size         = 0
-      asg_max_size         = 30
-      asg_desired_capacity = 1
-      kubelet_extra_args   = "--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot"
+      name                    = "compute"
+      override_instance_types = local.instance_types
+      spot_instance_pools     = length(local.instance_types)
+      asg_min_size            = 0
+      asg_max_size            = 30
+      asg_desired_capacity    = 1
+      kubelet_extra_args      = "--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot"
       tags = concat(local.autoscaler_tag, [{
         key                 = "WorkClass"
         propagate_at_launch = "false"
