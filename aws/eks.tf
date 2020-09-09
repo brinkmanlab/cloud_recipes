@@ -11,7 +11,8 @@ locals {
       value               = "true"
     },
   ]
-  network = module.vpc.vpc_id
+  network        = module.vpc.vpc_id
+  instance_types = ["c5.2xlarge", "c5.4xlarge", "c5.9xlarge", "a1.2xlarge", "a1.4xlarge", "c5d.2xlarge", "c5d.4xlarge", "c5d.9xlarge", "c5a.2xlarge", "c5a.4xlarge", "c5a.8xlarge", "c5ad.2xlarge", "c5ad.4xlarge", "c5ad.8xlarge", "c5n.2xlarge", "c5n.4xlarge", "c4.2xlarge", "c4.4xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5d.2xlarge", "m5d.4xlarge", "m5d.8xlarge", "m5a.2xlarge", "m5a.4xlarge", "m5ad.2xlarge", "m5ad.4xlarge", "m5n.2xlarge", "m5n.4xlarge", "m5dn.2xlarge", "m5dn.4xlarge", "m4.2xlarge", "m4.4xlarge"]
 }
 
 module "eks" {
@@ -21,13 +22,13 @@ module "eks" {
   subnets          = module.vpc.private_subnets
   vpc_id           = module.vpc.vpc_id
   write_kubeconfig = false
+  # TODO iam_path = "/${local.instance}/"
 
   manage_aws_auth               = true
   cluster_create_security_group = true
   cluster_enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   worker_groups = [
-    # TODO https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/spot-instances.md#using-launch-templates
     {
       name                 = "services"
       instance_type        = "t3.xlarge"
@@ -42,7 +43,7 @@ module "eks" {
         value               = "service"
       }, ])
       cpu_credits = "unlimited"
-      }, {
+    }, /*{
       name                 = "compute"
       instance_type        = "c5.2xlarge"
       asg_min_size         = 0
@@ -55,6 +56,25 @@ module "eks" {
         value               = "compute"
       }, ])
       # spot_price           =
+    },*/
+  ]
+
+  worker_groups_launch_template = [
+    # https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/spot-instances.md#using-launch-templates
+    {
+      name                 = "compute"
+      instance_type        = local.instance_types
+      spot_instance_pools  = length(local.instance_types)
+      asg_min_size         = 0
+      asg_max_size         = 30
+      asg_desired_capacity = 1
+      kubelet_extra_args   = "--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot"
+      tags = concat(local.autoscaler_tag, [{
+        key                 = "WorkClass"
+        propagate_at_launch = "false"
+        value               = "compute"
+      }, ])
+      max_instance_lifetime = 24 * 60 * 60 # 24hrs max lifetime in seconds
     },
   ]
 }
