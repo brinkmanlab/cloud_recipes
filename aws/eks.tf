@@ -12,7 +12,7 @@ locals {
     },
   ]
   network        = module.vpc.vpc_id
-  instance_types = ["c5.2xlarge", "c5.4xlarge", "c5.9xlarge", "a1.2xlarge", "a1.4xlarge", "c5d.2xlarge", "c5d.4xlarge", "c5d.9xlarge", "c5a.2xlarge", "c5a.4xlarge", "c5a.8xlarge", "c5ad.2xlarge", "c5ad.4xlarge", "c5ad.8xlarge", "c5n.2xlarge", "c5n.4xlarge", "c4.2xlarge", "c4.4xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5d.2xlarge", "m5d.4xlarge", "m5d.8xlarge", "m5a.2xlarge", "m5a.4xlarge", "m5ad.2xlarge", "m5ad.4xlarge", "m5n.2xlarge", "m5n.4xlarge", "m5dn.2xlarge", "m5dn.4xlarge", "m4.2xlarge", "m4.4xlarge"]
+  instance_types = ["c5.2xlarge", "c5.4xlarge", "c5.9xlarge", "c5d.2xlarge", "c5d.4xlarge", "c5a.2xlarge", "c5a.4xlarge", "c5a.8xlarge", "c4.2xlarge", "c4.4xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5d.2xlarge", "m5d.4xlarge", "m5d.8xlarge", "m5a.2xlarge", "m5a.4xlarge", "m4.2xlarge", "m4.4xlarge"]
 }
 
 module "eks" {
@@ -64,7 +64,7 @@ module "eks" {
     {
       name                    = "compute"
       override_instance_types = local.instance_types
-      spot_instance_pools     = length(local.instance_types)
+      spot_instance_pools     = length(local.instance_types) # Max 20
       asg_min_size            = 0
       asg_max_size            = 30
       asg_desired_capacity    = 1
@@ -74,7 +74,7 @@ module "eks" {
         propagate_at_launch = "false"
         value               = "compute"
       }, ])
-      max_instance_lifetime = 24 * 60 * 60 # 24hrs max lifetime in seconds
+      max_instance_lifetime = 604800 # Minimum time allowed by AWS, 168hrs
     },
   ]
 }
