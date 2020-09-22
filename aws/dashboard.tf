@@ -1,4 +1,4 @@
-# TODO convert chart to terraform
+# TODO convert to terraform https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
 
 resource "helm_release" "dashboard" {
   name       = "dashboard-chart"
