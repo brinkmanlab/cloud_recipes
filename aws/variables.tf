@@ -9,11 +9,26 @@ variable "cluster_name" {
 }
 
 variable "instance" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "debug" {
-  type = bool
+  type    = bool
   default = false
+}
+
+variable "dashboard_version" {
+  type    = string
+  default = "2.0.0"
+}
+
+variable "metrics_scraper_version" {
+  type    = string
+  default = "1.0.4"
+}
+
+variable "metrics_server_version" {
+  type    = string
+  default = "0.3.6"
 }

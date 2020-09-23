@@ -101,7 +101,7 @@ resource "kubernetes_deployment" "metrics" {
         }
         container {
           name              = "metrics-server"
-          image             = "k8s.gcr.io/metrics-server-amd64:v0.3.6"
+          image             = "k8s.gcr.io/metrics-server-amd64:v${var.metrics_server_version}"
           image_pull_policy = "IfNotPresent"
           args = [
             "--v=2",

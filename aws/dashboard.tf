@@ -197,7 +197,7 @@ resource "kubernetes_deployment" "kube_dashboard" {
       spec {
         container {
           name              = "kubernetes-dashboard"
-          image             = "kubernetesui/dashboard:v2.0.0"
+          image             = "kubernetesui/dashboard:v${var.dashboard_version}"
           image_pull_policy = "Always"
           port {
             container_port = 8443
@@ -309,7 +309,7 @@ resource "kubernetes_deployment" "kube_dashboard_scraper" {
       spec {
         container {
           name  = "dashboard-metrics-scraper"
-          image = "kubernetesui/metrics-scraper:v1.0.4"
+          image = "kubernetesui/metrics-scraper:v${var.metrics_scraper_version}"
           port {
             container_port = 8000
             protocol       = "TCP"
