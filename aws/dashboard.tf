@@ -47,7 +47,7 @@ resource "kubernetes_secret" "kube_dashboard_certs" {
   type = "Opaque"
 }
 
-resource "kubernetes_secret" "kube_dashboard_certs" {
+resource "kubernetes_secret" "kube_dashboard_csrf" {
   metadata {
     name      = "kubernetes-dashboard-csrf"
     namespace = kubernetes_namespace.kube_dashboard.metadata.0.name
