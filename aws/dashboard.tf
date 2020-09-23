@@ -247,7 +247,8 @@ resource "kubernetes_deployment" "kube_dashboard" {
           empty_dir {
           }
         }
-        service_account_name = "kubernetes-dashboard"
+        service_account_name            = "kubernetes-dashboard"
+        automount_service_account_token = true
         node_selector = {
           "kubernetes.io/os" = "linux"
         }
@@ -333,7 +334,8 @@ resource "kubernetes_deployment" "kube_dashboard_scraper" {
             run_as_group               = 2001
           }
         }
-        service_account_name = "kubernetes-dashboard"
+        service_account_name            = "kubernetes-dashboard"
+        automount_service_account_token = true
         node_selector = {
           "kubernetes.io/os" = "linux"
         }
