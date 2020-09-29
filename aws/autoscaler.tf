@@ -186,7 +186,11 @@ resource "kubernetes_cluster_role" "autoscaler" {
       "get",
       "update",
     ]
-
+  }
+  rule {
+    api_groups = ["storage.k8s.io"]
+    resources  = ["csinodes"]
+    verbs      = ["watch", "list", "get"]
   }
 }
 
