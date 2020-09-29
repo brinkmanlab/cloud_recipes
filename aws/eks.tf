@@ -52,8 +52,8 @@ module "eks" {
 
       kubelet_extra_args = "--node-labels=WorkClass=service"
       tags = concat(local.autoscaler_tag, [{
-        key                 = "WorkClass"
-        propagate_at_launch = "false"
+        key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
+        propagate_at_launch = "true"
         value               = "service"
       }, ])
       cpu_credits = "unlimited"
@@ -84,8 +84,8 @@ module "eks" {
       asg_desired_capacity    = 1
       kubelet_extra_args      = "--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot"
       tags = concat(local.autoscaler_tag, [{
-        key                 = "WorkClass"
-        propagate_at_launch = "false"
+        key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
+        propagate_at_launch = "true"
         value               = "compute"
       }, ])
       max_instance_lifetime = 604800 # Minimum time allowed by AWS, 168hrs
@@ -100,8 +100,8 @@ module "eks" {
       asg_desired_capacity    = 1
       kubelet_extra_args      = "--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot"
       tags = concat(local.autoscaler_tag, [{
-        key                 = "WorkClass"
-        propagate_at_launch = "false"
+        key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
+        propagate_at_launch = "true"
         value               = "compute"
       }, ])
       max_instance_lifetime = 604800 # Minimum time allowed by AWS, 168hrs

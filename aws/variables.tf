@@ -32,3 +32,8 @@ variable "metrics_server_version" {
   type    = string
   default = "0.3.6"
 }
+
+variable "autoscaler_version" {
+  type    = string
+  default = "1.19.0" # https://console.cloud.google.com/gcr/images/google-containers/GLOBAL/cluster-autoscaler?gcrImageListsize=30
+}

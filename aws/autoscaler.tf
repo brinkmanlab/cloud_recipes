@@ -300,7 +300,7 @@ resource "kubernetes_deployment" "autoscaler" {
         automount_service_account_token = true
         container {
           name  = "cluster-autoscaler"
-          image = "k8s.gcr.io/autoscaling/cluster-autoscaler:v1.17.3" # https://github.com/kubernetes/autoscaler/releases
+          image = "k8s.gcr.io/autoscaling/cluster-autoscaler:v${var.autoscaler_version}" # https://github.com/kubernetes/autoscaler/releases
           command = [
             "./cluster-autoscaler",
             "--v=4",
