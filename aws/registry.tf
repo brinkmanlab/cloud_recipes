@@ -34,6 +34,7 @@ data "aws_iam_policy_document" "docker_cache_assumerole" {
 }
 
 resource "aws_iam_role" "docker_cache" {
+  name_prefix        = local.docker_cache_name
   assume_role_policy = data.aws_iam_policy_document.docker_cache_assumerole.json
 }
 

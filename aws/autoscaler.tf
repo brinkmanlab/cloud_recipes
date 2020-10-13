@@ -1,9 +1,29 @@
 # https://github.com/terraform-aws-modules/terraform-aws-eks/tree/master/examples/irsa
 # https://github.com/terraform-aws-modules/terraform-aws-eks/issues/324
 
-resource "aws_iam_user" "autoscaler" {
-  name = "autoscaler"
-  path = "/${local.instance}/"
+locals {
+  autoscaler_name = "cluster-autoscaler"
+}
+
+data "aws_iam_policy_document" "autoscaler_assumerole" {
+  statement {
+    effect = "Allow"
+    principals {
+      identifiers = [module.eks.oidc_provider_arn]
+      type        = "Federated"
+    }
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    condition {
+      test     = "StringEquals"
+      values   = ["system:serviceaccount:kube-system:${local.autoscaler_name}"]
+      variable = "${trimprefix(module.eks.cluster_oidc_issuer_url, "https://")}:sub"
+    }
+  }
+}
+
+resource "aws_iam_role" "autoscaler" {
+  name_prefix        = local.autoscaler_name
+  assume_role_policy = data.aws_iam_policy_document.autoscaler.json
 }
 
 data "aws_iam_policy_document" "autoscaler" {
@@ -33,21 +53,20 @@ resource "aws_iam_policy" "autoscaler" {
 }
 
 resource "aws_iam_user_policy_attachment" "autoscaler" {
-  user       = aws_iam_user.autoscaler.name
+  user       = aws_iam_role.autoscaler.name
   policy_arn = aws_iam_policy.autoscaler.arn
-}
-
-resource "aws_iam_access_key" "autoscaler" {
-  user = aws_iam_user.autoscaler.name
 }
 
 resource "kubernetes_service_account" "autoscaler" {
   metadata {
-    name      = "cluster-autoscaler"
+    name      = local.autoscaler_name
     namespace = "kube-system"
     labels = {
       k8s-addon = "cluster-autoscaler.addons.k8s.io"
       k8s-app   = "cluster-autoscaler"
+    }
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.autoscaler.arn
     }
   }
 }
@@ -287,7 +306,13 @@ resource "kubernetes_deployment" "autoscaler" {
     template {
       metadata {
         labels = {
-          app = "cluster-autoscaler"
+          App                            = local.autoscaler_name
+          "app.kubernetes.io/name"       = local.autoscaler_name
+          "app.kubernetes.io/instance"   = local.autoscaler_name
+          "app.kubernetes.io/version"    = var.autoscaler_version
+          "app.kubernetes.io/component"  = "cluster-autoscaler"
+          "app.kubernetes.io/part-of"    = "kubernetes"
+          "app.kubernetes.io/managed-by" = "terraform"
         }
         annotations = {
           "prometheus.io/scrape" = "true"
@@ -295,7 +320,7 @@ resource "kubernetes_deployment" "autoscaler" {
         }
       }
       spec {
-        service_account_name            = "cluster-autoscaler"
+        service_account_name            = kubernetes_service_account.autoscaler.metadata.0.name
         automount_service_account_token = true
         container {
           name  = "cluster-autoscaler"
@@ -312,16 +337,6 @@ resource "kubernetes_deployment" "autoscaler" {
             "--skip-nodes-with-system-pods=false",
             #"--scale-down-unneeded-time=5min",
           ]
-
-          env {
-            name  = "AWS_ACCESS_KEY_ID"
-            value = aws_iam_access_key.autoscaler.id
-          }
-
-          env {
-            name  = "AWS_SECRET_ACCESS_KEY"
-            value = aws_iam_access_key.autoscaler.secret
-          }
 
           env {
             name  = "AWS_REGION"
