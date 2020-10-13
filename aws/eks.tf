@@ -36,8 +36,9 @@ module "eks" {
   subnets          = module.vpc.private_subnets
   vpc_id           = module.vpc.vpc_id
   write_kubeconfig = false
-  # TODO iam_path = "/${local.instance}/"
+  iam_path         = "/${local.instance}/"
 
+  enable_irsa                   = true # Outputs oidc_provider_arn
   manage_aws_auth               = true
   cluster_create_security_group = true
   cluster_enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]

@@ -1,3 +1,5 @@
+# TODO move to k8s folder
+
 # https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
 
 resource "kubernetes_namespace" "kube_dashboard" {

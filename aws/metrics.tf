@@ -1,3 +1,5 @@
+# TODO move to k8s folder
+
 resource "kubernetes_cluster_role" "aggregated_metrics_reader" {
   metadata {
     name = "system:aggregated-metrics-reader"
