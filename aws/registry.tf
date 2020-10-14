@@ -75,13 +75,6 @@ resource "aws_iam_role_policy_attachment" "docker_cache" {
   policy_arn = aws_iam_policy.docker_cache.arn
 }
 
-resource "kubernetes_service_account" "docker_cache" {
-  metadata {
-    name      = local.docker_cache_name
-    namespace = "kube-system"
-  }
-}
-
 resource "kubernetes_deployment" "docker_cache" {
   wait_for_rollout = ! var.debug
   metadata {
