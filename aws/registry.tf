@@ -17,25 +17,28 @@ resource "kubernetes_service_account" "docker_cache" {
   }
 }
 
-data "aws_iam_policy_document" "docker_cache_assumerole" {
-  statement {
-    effect = "Allow"
-    principals {
-      identifiers = [module.eks.oidc_provider_arn]
-      type        = "Federated"
-    }
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-    condition {
-      test     = "StringEquals"
-      values   = ["system:serviceaccount:kube-system:${local.docker_cache_name}"]
-      variable = "${trimprefix(module.eks.cluster_oidc_issuer_url, "https://")}:sub"
-    }
-  }
-}
-
 resource "aws_iam_role" "docker_cache" {
-  name_prefix        = local.docker_cache_name
-  assume_role_policy = data.aws_iam_policy_document.docker_cache_assumerole.json
+  name_prefix = local.docker_cache_name
+  # data.aws_iam_policy_document cant be used here, tries to include "Resource" attribute
+  assume_role_policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Federated": "${module.eks.oidc_provider_arn}"
+        },
+        "Action": "sts:AssumeRoleWithWebIdentity",
+        "Condition": {
+          "StringEquals": {
+            "${trimprefix(module.eks.cluster_oidc_issuer_url, "https://")}:sub": "system:serviceaccount:kube-system:${local.docker_cache_name}"
+          }
+        }
+      }
+    ]
+  }
+  EOF
 }
 
 data "aws_iam_policy_document" "docker_cache" {
