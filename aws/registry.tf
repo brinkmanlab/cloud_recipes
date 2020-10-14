@@ -159,7 +159,7 @@ resource "kubernetes_service" "docker_cache" {
   }
   spec {
     selector = {
-      App = kubernetes_deployment.docker_cache.metadata.labels.App
+      App = kubernetes_deployment.docker_cache.metadata.0.labels.App
     }
     port {
       protocol    = "TCP"
