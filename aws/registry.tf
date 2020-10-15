@@ -78,6 +78,37 @@ resource "aws_iam_role_policy_attachment" "docker_cache" {
   policy_arn = aws_iam_policy.docker_cache.arn
 }
 
+resource "kubernetes_secret" "docker_cache" {
+  metadata {
+    name      = "docker-cache-config"
+    namespace = "kube-system"
+  }
+  data = {
+    "config.yml" = <<-EOF
+      version: 0.1
+      log:
+        fields:
+          service: registry
+      storage:
+        cache:
+          blobdescriptor: inmemory
+        s3:
+          region: ${data.aws_region.current.name}
+          bucket: ${aws_s3_bucket.docker_cache.id}
+      http:
+        addr: :5000
+        headers:
+          X-Content-Type-Options: [nosniff]
+      health:
+        storagedriver:
+          enabled: true
+          interval: 10s
+          threshold: 3
+    EOF
+  }
+  type = "Opaque"
+}
+
 resource "kubernetes_deployment" "docker_cache" {
   depends_on       = [module.eks]
   wait_for_rollout = ! var.debug
@@ -117,20 +148,16 @@ resource "kubernetes_deployment" "docker_cache" {
             name           = "docker-cache"
             container_port = 5000
           }
-          # https://docs.docker.com/registry/storage-drivers/#provided-drivers
-          #env { Uses node IAM role
-          #  name = "accesskey"
-          #}
-          #env {
-          #  name = "secretkey"
-          #}
-          env {
-            name  = "REGISTRY_STORAGE_S3_REGION"
-            value = data.aws_region.current.name
+          volume_mount {
+            mount_path = "/etc/docker/registry"
+            name       = "config"
+            read_only  = true
           }
-          env {
-            name  = "REGISTRY_STORAGE_S3_BUCKET"
-            value = aws_s3_bucket.docker_cache.id
+        }
+        volume {
+          name = "config"
+          secret {
+            secret_name = kubernetes_secret.docker_cache.metadata.0.name
           }
         }
       }
