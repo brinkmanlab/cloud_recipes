@@ -293,7 +293,7 @@ resource "kubernetes_deployment" "autoscaler" {
     name      = "cluster-autoscaler"
     namespace = "kube-system"
     labels = {
-      app = "cluster-autoscaler"
+      App = "cluster-autoscaler"
     }
     annotations = {
       "cluster-autoscaler.kubernetes.io/safe-to-evict" = "false"
@@ -303,7 +303,7 @@ resource "kubernetes_deployment" "autoscaler" {
     replicas = 1
     selector {
       match_labels = {
-        app = "cluster-autoscaler"
+        App = "cluster-autoscaler"
       }
     }
     template {
