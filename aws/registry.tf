@@ -187,6 +187,11 @@ resource "kubernetes_service" "docker_cache" {
   metadata {
     name      = "docker-cache"
     namespace = "kube-system"
+    annotations = {
+      # https://gist.github.com/mgoodness/1a2926f3b02d8e8149c224d25cc57dc1
+      "service.beta.kubernetes.io/aws-load-balancer-internal" = "true"
+      "service.beta.kubernetes.io/aws-load-balancer-type"     = "nlb"
+    }
   }
   spec {
     selector = {
@@ -198,6 +203,14 @@ resource "kubernetes_service" "docker_cache" {
       target_port = "docker-cache"
     }
 
-    type = "ClusterIP"
+    type = "LoadBalancer"
   }
+}
+
+resource "aws_route53_record" "local" {
+  zone_id = aws_route53_zone.local.zone_id
+  name    = "docker-cache.kube-system.svc.cluster.local"
+  type    = "CNAME"
+  ttl     = "300"
+  records = kubernetes_service.docker_cache.load_balancer_ingress[*].hostname
 }
