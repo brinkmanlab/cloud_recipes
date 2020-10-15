@@ -148,6 +148,12 @@ resource "kubernetes_deployment" "docker_cache" {
             name           = "docker-cache"
             container_port = 5000
           }
+
+          #env { TODO?
+          #  name = "REGISTRY_HTTP_SECRET"
+          #  value =
+          #}
+
           volume_mount {
             mount_path = "/etc/docker/registry"
             name       = "config"
@@ -209,7 +215,7 @@ resource "kubernetes_service" "docker_cache" {
 
 resource "aws_route53_record" "local" {
   zone_id = aws_route53_zone.local.zone_id
-  name    = "docker-cache.kube-system.svc.cluster.local"
+  name    = local.docker_cache_url
   type    = "CNAME"
   ttl     = "300"
   records = kubernetes_service.docker_cache.load_balancer_ingress[*].hostname
