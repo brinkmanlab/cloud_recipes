@@ -8,6 +8,7 @@ resource "aws_s3_bucket" "docker_cache" {
 }
 
 resource "kubernetes_service_account" "docker_cache" {
+  depends_on = [module.eks]
   metadata {
     name      = local.docker_cache_name
     namespace = "kube-system"
@@ -42,7 +43,6 @@ resource "aws_iam_role" "docker_cache" {
 }
 
 data "aws_iam_policy_document" "docker_cache" {
-  policy_id = "docker-cache"
   statement {
     effect = "Allow"
     actions = [
@@ -79,6 +79,7 @@ resource "aws_iam_role_policy_attachment" "docker_cache" {
 }
 
 resource "kubernetes_deployment" "docker_cache" {
+  depends_on       = [module.eks]
   wait_for_rollout = ! var.debug
   metadata {
     name      = "docker-cache"
@@ -150,7 +151,7 @@ resource "kubernetes_horizontal_pod_autoscaler" "docker_cache" {
     scale_target_ref {
       api_version = "apps/v1"
       kind        = "Deployment"
-      name        = "docker-cache"
+      name        = kubernetes_deployment.docker_cache.metadata.0.name
     }
   }
 }

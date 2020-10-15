@@ -55,8 +55,8 @@ resource "aws_iam_policy" "autoscaler" {
   policy = data.aws_iam_policy_document.autoscaler.json
 }
 
-resource "aws_iam_user_policy_attachment" "autoscaler" {
-  user       = aws_iam_role.autoscaler.name
+resource "aws_iam_role_policy_attachment" "autoscaler" {
+  role       = aws_iam_role.autoscaler.name
   policy_arn = aws_iam_policy.autoscaler.arn
 }
 
