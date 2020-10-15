@@ -44,3 +44,11 @@ module "vpc" { # https://github.com/terraform-aws-modules/terraform-aws-vpc/
     Environment = local.instance
   }
 }
+
+resource "aws_route53_zone" "local" {
+  name = "local"
+
+  vpc {
+    vpc_id = module.vpc.vpc_id
+  }
+}
