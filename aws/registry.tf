@@ -3,8 +3,18 @@ locals {
 }
 
 resource "aws_s3_bucket" "docker_cache" {
-  bucket = "docker-cache-${local.instance}"
-  acl    = "private"
+  bucket_prefix = "docker-cache-${local.instance}-"
+  acl           = "private"
+}
+
+module "docker_cache_role" {
+  source                        = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
+  create_role                   = true
+  role_name                     = local.docker_cache_name
+  role_path                     = "/${local.instance}/"
+  provider_url                  = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
+  role_policy_arns              = [aws_iam_policy.docker_cache.arn]
+  oidc_fully_qualified_subjects = ["system:serviceaccount:kube-system:${local.docker_cache_name}"]
 }
 
 resource "kubernetes_service_account" "docker_cache" {
@@ -13,36 +23,19 @@ resource "kubernetes_service_account" "docker_cache" {
     name      = local.docker_cache_name
     namespace = "kube-system"
     annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.docker_cache.arn
+      "eks.amazonaws.com/role-arn" = module.docker_cache_role.this_iam_role_arn
     }
   }
 }
 
-resource "aws_iam_role" "docker_cache" {
-  name_prefix = local.docker_cache_name
-  # data.aws_iam_policy_document cant be used here, tries to include "Resource" attribute
-  assume_role_policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Principal": {
-          "Federated": "${module.eks.oidc_provider_arn}"
-        },
-        "Action": "sts:AssumeRoleWithWebIdentity",
-        "Condition": {
-          "StringEquals": {
-            "${trimprefix(module.eks.cluster_oidc_issuer_url, "https://")}:sub": "system:serviceaccount:kube-system:${local.docker_cache_name}"
-          }
-        }
-      }
-    ]
-  }
-  EOF
-}
-
 data "aws_iam_policy_document" "docker_cache" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:ListAllMyBuckets"
+    ]
+    resources = ["arn:aws:s3:::*"]
+  }
   statement {
     effect = "Allow"
     actions = [
@@ -66,16 +59,11 @@ data "aws_iam_policy_document" "docker_cache" {
 }
 
 resource "aws_iam_policy" "docker_cache" {
-  name        = "docker-cache"
+  name_prefix = "docker-cache"
   path        = "/${local.instance}/"
   description = "Docker image cache policy"
 
   policy = data.aws_iam_policy_document.docker_cache.json
-}
-
-resource "aws_iam_role_policy_attachment" "docker_cache" {
-  role       = aws_iam_role.docker_cache.name
-  policy_arn = aws_iam_policy.docker_cache.arn
 }
 
 resource "kubernetes_secret" "docker_cache" {
@@ -94,7 +82,7 @@ resource "kubernetes_secret" "docker_cache" {
         cache:
           blobdescriptor: inmemory
         s3:
-          region: ${data.aws_region.current.name}
+          region: ${aws_s3_bucket.docker_cache.region}
           bucket: ${aws_s3_bucket.docker_cache.id}
       http:
         addr: :5000

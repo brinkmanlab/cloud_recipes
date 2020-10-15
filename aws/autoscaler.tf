@@ -5,28 +5,14 @@ locals {
   autoscaler_name = "cluster-autoscaler"
 }
 
-resource "aws_iam_role" "autoscaler" {
-  name_prefix = local.autoscaler_name
-  # data.aws_iam_policy_document cant be used here, tries to include "Resource" attribute
-  assume_role_policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Principal": {
-          "Federated": "${module.eks.oidc_provider_arn}"
-        },
-        "Action": "sts:AssumeRoleWithWebIdentity",
-        "Condition": {
-          "StringEquals": {
-            "${trimprefix(module.eks.cluster_oidc_issuer_url, "https://")}:sub": "system:serviceaccount:kube-system:${local.autoscaler_name}"
-          }
-        }
-      }
-    ]
-  }
-  EOF
+module "autoscaler_role" {
+  source                        = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
+  create_role                   = true
+  role_name                     = local.autoscaler_name
+  role_path                     = "/${local.instance}/"
+  provider_url                  = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
+  role_policy_arns              = [aws_iam_policy.autoscaler.arn]
+  oidc_fully_qualified_subjects = ["system:serviceaccount:kube-system:${local.autoscaler_name}"]
 }
 
 data "aws_iam_policy_document" "autoscaler" {
@@ -55,11 +41,6 @@ resource "aws_iam_policy" "autoscaler" {
   policy = data.aws_iam_policy_document.autoscaler.json
 }
 
-resource "aws_iam_role_policy_attachment" "autoscaler" {
-  role       = aws_iam_role.autoscaler.name
-  policy_arn = aws_iam_policy.autoscaler.arn
-}
-
 resource "kubernetes_service_account" "autoscaler" {
   metadata {
     name      = local.autoscaler_name
@@ -69,7 +50,7 @@ resource "kubernetes_service_account" "autoscaler" {
       k8s-app   = "cluster-autoscaler"
     }
     annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.autoscaler.arn
+      "eks.amazonaws.com/role-arn" = module.autoscaler_role.this_iam_role_arn
     }
   }
 }
