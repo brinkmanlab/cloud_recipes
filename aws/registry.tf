@@ -84,6 +84,7 @@ resource "kubernetes_secret" "docker_cache" {
     namespace = "kube-system"
   }
   data = {
+    # TODO https://docs.docker.com/registry/configuration/#prometheus
     "config.yml" = <<-EOF
       version: 0.1
       log:
@@ -104,6 +105,10 @@ resource "kubernetes_secret" "docker_cache" {
           enabled: true
           interval: 10s
           threshold: 3
+      proxy:
+        remoteurl: ${var.docker_registry_proxies[0].url}
+        username: ${var.docker_registry_proxies[0].username}
+        password: ${var.docker_registry_proxies[0].password}
     EOF
   }
   type = "Opaque"

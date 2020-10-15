@@ -37,3 +37,14 @@ variable "autoscaler_version" {
   type    = string
   default = "1.19.0" # https://console.cloud.google.com/gcr/images/google-containers/GLOBAL/cluster-autoscaler?gcrImageListsize=30
 }
+
+variable "docker_registry_proxies" {
+  type = list(object({
+    name     = string
+    url      = string
+    username = string
+    password = string
+  }))
+  default     = []
+  description = "Docker registries to proxy"
+}
