@@ -15,18 +15,18 @@ locals {
   instance_types       = ["c5.2xlarge", "c5.4xlarge", "c5.9xlarge", "c5d.2xlarge", "c5d.4xlarge", "c5a.2xlarge", "c5a.4xlarge", "c5a.8xlarge", "c4.2xlarge", "c4.4xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5d.2xlarge", "m5d.4xlarge", "m5d.8xlarge", "m5a.2xlarge", "m5a.4xlarge", "m4.2xlarge", "m4.4xlarge"]
   large_instance_types = ["c4.8xlarge", "c5.12xlarge", "c5.9xlarge", "c5a.12xlarge", "c5a.8xlarge", "c5d.12xlarge", "c5d.9xlarge", "c5n.9xlarge", "m5.12xlarge", "m5.8xlarge", "m5a.12xlarge", "m5a.8xlarge", "m5d.12xlarge", "m5d.8xlarge", "m5n.12xlarge", "m5n.8xlarge"]
 
-  #docker_json = jsonencode({ # https://github.com/awslabs/amazon-eks-ami/blob/master/files/docker-daemon.json
-  #  "bridge" : "none",
-  #  "log-driver" : "json-file",
-  #  "log-opts" : {
-  #    "max-size" : "10m",
-  #    "max-file" : "10"
-  #  },
-  #  "live-restore" : true,
-  #  "max-concurrent-downloads" : 10
-  #  "registry-mirrors" : ["http://docker-cache.kube-system.svc.cluster.local"]  # https://docs.docker.com/registry/recipes/mirror/#configure-the-cache
-  #  "insecure-registries" : ["docker-cache.kube-system.svc.cluster.local:5000"] # https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
-  #})
+  docker_json = jsonencode({ # https://github.com/awslabs/amazon-eks-ami/blob/master/files/docker-daemon.json
+    "bridge" : "none",
+    "log-driver" : "json-file",
+    "log-opts" : {
+      "max-size" : "10m",
+      "max-file" : "10"
+    },
+    "live-restore" : true,
+    "max-concurrent-downloads" : 10
+    "registry-mirrors" : ["http://docker-cache.kube-system.svc.cluster.local"]  # https://docs.docker.com/registry/recipes/mirror/#configure-the-cache
+    "insecure-registries" : ["docker-cache.kube-system.svc.cluster.local:5000"] # https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
+  })
 }
 
 module "eks" {
@@ -89,8 +89,8 @@ module "eks" {
         propagate_at_launch = "true"
         value               = "compute"
       }, ])
-      max_instance_lifetime = 604800 # Minimum time allowed by AWS, 168hrs
-      #bootstrap_extra_args  = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+      max_instance_lifetime = 604800                                        # Minimum time allowed by AWS, 168hrs
+      bootstrap_extra_args  = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
     },
     {
       name                    = "big-compute"
@@ -105,8 +105,8 @@ module "eks" {
         propagate_at_launch = "true"
         value               = "compute"
       }, ])
-      max_instance_lifetime = 604800 # Minimum time allowed by AWS, 168hrs
-      #bootstrap_extra_args  = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+      max_instance_lifetime = 604800                                        # Minimum time allowed by AWS, 168hrs
+      bootstrap_extra_args  = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
     },
   ]
 }
