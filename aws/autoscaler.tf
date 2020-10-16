@@ -5,14 +5,35 @@ locals {
   autoscaler_name = "cluster-autoscaler"
 }
 
-module "autoscaler_role" {
-  source                        = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
-  create_role                   = true
-  role_name                     = local.autoscaler_name
-  role_path                     = "/${local.instance}/"
-  provider_url                  = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
-  role_policy_arns              = [aws_iam_policy.autoscaler.arn]
-  oidc_fully_qualified_subjects = ["system:serviceaccount:kube-system:${local.autoscaler_name}"]
+data "aws_iam_policy_document" "autoscaler_assume_role_with_oidc" {
+  statement {
+    effect = "Allow"
+
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.cluster_oidc_issuer_url]
+      #identifiers = ["arn:${data.aws_partition.current.partition}:iam::${local.aws_account_id}:oidc-provider/${url}"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${trimprefix(module.eks.cluster_oidc_issuer_url, "https://")}:sub"
+      values   = ["system:serviceaccount:kube-system:${local.autoscaler_name}"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${trimprefix(module.eks.cluster_oidc_issuer_url, "https://")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "autoscaler" {
+  name_prefix        = local.autoscaler_name
+  assume_role_policy = data.aws_iam_policy_document.autoscaler_assume_role_with_oidc.json
 }
 
 data "aws_iam_policy_document" "autoscaler" {
@@ -41,6 +62,11 @@ resource "aws_iam_policy" "autoscaler" {
   policy = data.aws_iam_policy_document.autoscaler.json
 }
 
+resource "aws_iam_role_policy_attachment" "autoscaler" {
+  role       = aws_iam_role.autoscaler.name
+  policy_arn = aws_iam_policy.autoscaler.arn
+}
+
 resource "kubernetes_service_account" "autoscaler" {
   metadata {
     name      = local.autoscaler_name
@@ -50,7 +76,7 @@ resource "kubernetes_service_account" "autoscaler" {
       k8s-app   = "cluster-autoscaler"
     }
     annotations = {
-      "eks.amazonaws.com/role-arn" = module.autoscaler_role.this_iam_role_arn
+      "eks.amazonaws.com/role-arn" = aws_iam_role.autoscaler.arn
     }
   }
 }

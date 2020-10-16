@@ -5,16 +5,7 @@ locals {
 resource "aws_s3_bucket" "docker_cache" {
   bucket_prefix = "docker-cache-${local.instance}-"
   acl           = "private"
-}
-
-module "docker_cache_role" {
-  source                        = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
-  create_role                   = true
-  role_name                     = local.docker_cache_name
-  role_path                     = "/${local.instance}/"
-  provider_url                  = trimprefix(module.eks.cluster_oidc_issuer_url, "https://")
-  role_policy_arns              = [aws_iam_policy.docker_cache.arn]
-  oidc_fully_qualified_subjects = ["system:serviceaccount:kube-system:${local.docker_cache_name}"]
+  force_destroy = true
 }
 
 resource "kubernetes_service_account" "docker_cache" {
@@ -23,9 +14,40 @@ resource "kubernetes_service_account" "docker_cache" {
     name      = local.docker_cache_name
     namespace = "kube-system"
     annotations = {
-      "eks.amazonaws.com/role-arn" = module.docker_cache_role.this_iam_role_arn
+      "eks.amazonaws.com/role-arn" = aws_iam_role.docker_cache.arn
     }
   }
+}
+
+data "aws_iam_policy_document" "docker_cache_assume_role_with_oidc" {
+  statement {
+    effect = "Allow"
+
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.cluster_oidc_issuer_url]
+      #identifiers = ["arn:${data.aws_partition.current.partition}:iam::${local.aws_account_id}:oidc-provider/${url}"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${trimprefix(module.eks.cluster_oidc_issuer_url, "https://")}:sub"
+      values   = ["system:serviceaccount:kube-system:${local.docker_cache_name}"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${trimprefix(module.eks.cluster_oidc_issuer_url, "https://")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "docker_cache" {
+  name_prefix        = local.docker_cache_name
+  assume_role_policy = data.aws_iam_policy_document.docker_cache_assume_role_with_oidc.json
 }
 
 data "aws_iam_policy_document" "docker_cache" {
@@ -64,6 +86,11 @@ resource "aws_iam_policy" "docker_cache" {
   description = "Docker image cache policy"
 
   policy = data.aws_iam_policy_document.docker_cache.json
+}
+
+resource "aws_iam_role_policy_attachment" "docker_cache" {
+  role       = aws_iam_role.docker_cache.name
+  policy_arn = aws_iam_policy.docker_cache.arn
 }
 
 resource "kubernetes_secret" "docker_cache" {
@@ -109,10 +136,10 @@ resource "kubernetes_deployment" "docker_cache" {
     name      = "docker-cache"
     namespace = "kube-system"
     labels = {
-      App                          = local.docker_cache_name
-      "app.kubernetes.io/name"     = local.docker_cache_name
-      "app.kubernetes.io/instance" = local.docker_cache_name
-      #"app.kubernetes.io/version" = TODO
+      App                            = local.docker_cache_name
+      "app.kubernetes.io/name"       = local.docker_cache_name
+      "app.kubernetes.io/instance"   = local.docker_cache_name
+      "app.kubernetes.io/version"    = "2"
       "app.kubernetes.io/component"  = "container-cache"
       "app.kubernetes.io/part-of"    = "kubernetes"
       "app.kubernetes.io/managed-by" = "terraform"
