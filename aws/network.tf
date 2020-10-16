@@ -33,6 +33,7 @@ module "vpc" { # https://github.com/terraform-aws-modules/terraform-aws-vpc/
   enable_dns_hostnames = true
   enable_dns_support   = true
   #enable_efs_endpoint = true
+  enable_s3_endpoint           = true
   create_database_subnet_group = true
 
   vpc_tags = {
