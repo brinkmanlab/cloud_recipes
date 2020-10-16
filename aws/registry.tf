@@ -156,13 +156,13 @@ resource "kubernetes_deployment" "docker_cache" {
   spec {
     selector {
       match_labels = {
-        app = "docker-cache"
+        App = "docker-cache"
       }
     }
     template {
       metadata {
         labels = {
-          app = "docker-cache"
+          App = "docker-cache"
         }
       }
       spec {
