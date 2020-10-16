@@ -1,3 +1,5 @@
+#TODO docker cache simply doesnt work for quay.io: https://github.com/moby/moby/pull/34319
+
 locals {
   docker_cache_name = "docker-cache"
 }

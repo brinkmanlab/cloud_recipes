@@ -25,8 +25,8 @@ locals {
     },
     "live-restore" : true,
     "max-concurrent-downloads" : 10
-    "registry-mirrors" : ["http://${local.docker_cache_url}"]  # https://docs.docker.com/registry/recipes/mirror/#configure-the-cache
-    "insecure-registries" : ["${local.docker_cache_url}:5000"] # https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
+    "registry-mirrors" : ["http://${local.docker_cache_url}:5000"] # https://docs.docker.com/registry/recipes/mirror/#configure-the-cache
+    "insecure-registries" : ["${local.docker_cache_url}:5000"]     # https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
   })
 }
 
@@ -90,8 +90,9 @@ module "eks" {
         propagate_at_launch = "true"
         value               = "compute"
       }, ])
-      max_instance_lifetime = 604800                                        # Minimum time allowed by AWS, 168hrs
-      bootstrap_extra_args  = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+      max_instance_lifetime = 604800 # Minimum time allowed by AWS, 168hrs
+      #TODO docker cache simply doesnt work for quay.io: https://github.com/moby/moby/pull/34319
+      #bootstrap_extra_args  = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
     },
     {
       name                    = "big-compute"
@@ -106,8 +107,9 @@ module "eks" {
         propagate_at_launch = "true"
         value               = "compute"
       }, ])
-      max_instance_lifetime = 604800                                        # Minimum time allowed by AWS, 168hrs
-      bootstrap_extra_args  = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+      max_instance_lifetime = 604800 # Minimum time allowed by AWS, 168hrs
+      #TODO docker cache simply doesnt work for quay.io: https://github.com/moby/moby/pull/34319
+      #bootstrap_extra_args  = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
     },
   ]
 }
