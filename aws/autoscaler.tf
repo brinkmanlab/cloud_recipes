@@ -13,8 +13,7 @@ data "aws_iam_policy_document" "autoscaler_assume_role_with_oidc" {
 
     principals {
       type        = "Federated"
-      identifiers = [module.eks.cluster_oidc_issuer_url]
-      #identifiers = ["arn:${data.aws_partition.current.partition}:iam::${local.aws_account_id}:oidc-provider/${url}"]
+      identifiers = [module.eks.oidc_provider_arn]
     }
 
     condition {
