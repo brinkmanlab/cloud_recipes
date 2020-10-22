@@ -45,6 +45,6 @@ variable "docker_registry_proxies" {
     username = string
     password = string
   }))
-  default     = []
+  default     = {}
   description = "Docker registries to proxy"
 }
