@@ -39,8 +39,8 @@ variable "autoscaler_version" {
 }
 
 variable "docker_registry_proxies" {
-  type = list(object({
-    name     = string
+  type = map(object({
+    hostname = string
     url      = string
     username = string
     password = string

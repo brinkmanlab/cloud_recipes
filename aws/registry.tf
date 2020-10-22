@@ -130,41 +130,53 @@ resource "kubernetes_secret" "docker_cache" {
           enabled: true
           interval: 10s
           threshold: 3
-      proxy:
-        remoteurl: ${var.docker_registry_proxies[0].url}
-        username: ${var.docker_registry_proxies[0].username}
-        password: ${var.docker_registry_proxies[0].password}
+      #proxy:
+      #  remoteurl: ${var.docker_registry_proxies[0].url}
+      #  username: ${var.docker_registry_proxies[0].username}
+      #  password: ${var.docker_registry_proxies[0].password}
     EOF
   }
   type = "Opaque"
 }
 
+resource "kubernetes_secret" "registry_passwords" {
+  metadata {
+    name      = "registry-passwords"
+    namespace = "kube-system"
+  }
+  data = { for k, v in var.docker_registry_proxies : k => v.password }
+}
+
 resource "kubernetes_deployment" "docker_cache" {
+  for_each         = var.docker_registry_proxies
   depends_on       = [module.eks]
   wait_for_rollout = ! var.debug
   metadata {
-    name      = "docker-cache"
+    name      = "${local.docker_cache_name}-${each.key}"
     namespace = "kube-system"
     labels = {
-      App                            = local.docker_cache_name
+      App                            = "${local.docker_cache_name}-${each.key}"
       "app.kubernetes.io/name"       = local.docker_cache_name
-      "app.kubernetes.io/instance"   = local.docker_cache_name
+      "app.kubernetes.io/instance"   = "${local.docker_cache_name}-${each.key}"
       "app.kubernetes.io/version"    = "2"
       "app.kubernetes.io/component"  = "container-cache"
       "app.kubernetes.io/part-of"    = "kubernetes"
       "app.kubernetes.io/managed-by" = "terraform"
     }
+    annotations = {
+      proxying = each.value.hostname
+    }
   }
   spec {
     selector {
       match_labels = {
-        App = "docker-cache"
+        App = "${local.docker_cache_name}-${each.key}"
       }
     }
     template {
       metadata {
         labels = {
-          App = "docker-cache"
+          App = "${local.docker_cache_name}-${each.key}"
         }
       }
       spec {
@@ -177,6 +189,31 @@ resource "kubernetes_deployment" "docker_cache" {
           port {
             name           = "docker-cache"
             container_port = 5000
+          }
+
+          env {
+            name  = "REGISTRY_STORAGE_S3_ROOTDIRECTORY"
+            value = "/${each.key}/"
+          }
+
+          env {
+            name  = "REGISTRY_PROXY_REMOTEURL"
+            value = each.value.url
+          }
+
+          env {
+            name  = "REGISTRY_PROXY_USERNAME"
+            value = each.value.username
+          }
+
+          env {
+            name = "REGISTRY_PROXY_PASSWORD"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret.registry_passwords.metadata.0.name
+                key  = each.key
+              }
+            }
           }
 
           #env { TODO?
@@ -202,9 +239,10 @@ resource "kubernetes_deployment" "docker_cache" {
 }
 
 resource "kubernetes_horizontal_pod_autoscaler" "docker_cache" {
+  for_each = kubernetes_deployment.docker_cache
   metadata {
-    name      = "docker-cache"
-    namespace = "kube-system"
+    name      = each.value.metadata.0.name
+    namespace = each.value.metadata.0.namespace
   }
 
   spec {
@@ -214,24 +252,26 @@ resource "kubernetes_horizontal_pod_autoscaler" "docker_cache" {
     scale_target_ref {
       api_version = "apps/v1"
       kind        = "Deployment"
-      name        = kubernetes_deployment.docker_cache.metadata.0.name
+      name        = each.value.metadata.0.name
     }
   }
 }
 
 resource "kubernetes_service" "docker_cache" {
+  for_each = kubernetes_deployment.docker_cache
   metadata {
-    name      = "docker-cache"
-    namespace = "kube-system"
+    name      = each.value.metadata.0.name
+    namespace = each.value.metadata.0.namespace
     annotations = {
       # https://gist.github.com/mgoodness/1a2926f3b02d8e8149c224d25cc57dc1
       "service.beta.kubernetes.io/aws-load-balancer-internal" = "true"
       "service.beta.kubernetes.io/aws-load-balancer-type"     = "nlb"
+      proxying                                                = each.value.metadata.annotations.proxying
     }
   }
   spec {
     selector = {
-      App = kubernetes_deployment.docker_cache.metadata.0.labels.App
+      App = each.value.metadata.0.labels.App
     }
     port {
       protocol    = "TCP"
@@ -243,10 +283,12 @@ resource "kubernetes_service" "docker_cache" {
   }
 }
 
+# Creates internal DNS record spoofing registry domain
 resource "aws_route53_record" "local" {
-  zone_id = aws_route53_zone.local.zone_id
-  name    = local.docker_cache_url
-  type    = "CNAME"
-  ttl     = "300"
-  records = kubernetes_service.docker_cache.load_balancer_ingress[*].hostname
+  for_each = kubernetes_service.docker_cache
+  zone_id  = aws_route53_zone.local.zone_id
+  name     = each.value.metadata.0.annotations.proxying
+  type     = "CNAME"
+  ttl      = "300"
+  records  = each.value.load_balancer_ingress[*].hostname
 }

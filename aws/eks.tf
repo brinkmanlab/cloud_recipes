@@ -15,7 +15,6 @@ locals {
   instance_types       = ["c5.2xlarge", "c5.4xlarge", "c5.9xlarge", "c5d.2xlarge", "c5d.4xlarge", "c5a.2xlarge", "c5a.4xlarge", "c5a.8xlarge", "c4.2xlarge", "c4.4xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5d.2xlarge", "m5d.4xlarge", "m5d.8xlarge", "m5a.2xlarge", "m5a.4xlarge", "m4.2xlarge", "m4.4xlarge"]
   large_instance_types = ["c4.8xlarge", "c5.12xlarge", "c5.9xlarge", "c5a.12xlarge", "c5a.8xlarge", "c5d.12xlarge", "c5d.9xlarge", "c5n.9xlarge", "m5.12xlarge", "m5.8xlarge", "m5a.12xlarge", "m5a.8xlarge", "m5d.12xlarge", "m5d.8xlarge", "m5n.12xlarge", "m5n.8xlarge"]
 
-  docker_cache_url = "docker-cache.kube-system.svc.cluster.local"
   docker_json = jsonencode({ # https://github.com/awslabs/amazon-eks-ami/blob/master/files/docker-daemon.json
     "bridge" : "none",
     "log-driver" : "json-file",
@@ -25,8 +24,8 @@ locals {
     },
     "live-restore" : true,
     "max-concurrent-downloads" : 10
-    "registry-mirrors" : ["http://${local.docker_cache_url}:5000"] # https://docs.docker.com/registry/recipes/mirror/#configure-the-cache
-    "insecure-registries" : ["${local.docker_cache_url}:5000"]     # https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
+    #"registry-mirrors" : ["http://${local.docker_cache_url}:5000"] # https://docs.docker.com/registry/recipes/mirror/#configure-the-cache
+    "insecure-registries" : var.docker_registry_proxies.*.hostname # https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
   })
 }
 
