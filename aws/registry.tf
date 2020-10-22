@@ -130,10 +130,6 @@ resource "kubernetes_secret" "docker_cache" {
           enabled: true
           interval: 10s
           threshold: 3
-      #proxy:
-      #  remoteurl: ${var.docker_registry_proxies[0].url}
-      #  username: ${var.docker_registry_proxies[0].username}
-      #  password: ${var.docker_registry_proxies[0].password}
     EOF
   }
   type = "Opaque"
@@ -266,7 +262,7 @@ resource "kubernetes_service" "docker_cache" {
       # https://gist.github.com/mgoodness/1a2926f3b02d8e8149c224d25cc57dc1
       "service.beta.kubernetes.io/aws-load-balancer-internal" = "true"
       "service.beta.kubernetes.io/aws-load-balancer-type"     = "nlb"
-      proxying                                                = each.value.metadata.annotations.proxying
+      proxying                                                = each.value.metadata.0.annotations.proxying
     }
   }
   spec {
@@ -284,9 +280,18 @@ resource "kubernetes_service" "docker_cache" {
 }
 
 # Creates internal DNS record spoofing registry domain
+resource "aws_route53_zone" "docker_cache" {
+  for_each = var.docker_registry_proxies
+  name     = each.value.hostname
+
+  vpc {
+    vpc_id = module.vpc.vpc_id
+  }
+}
+
 resource "aws_route53_record" "local" {
   for_each = kubernetes_service.docker_cache
-  zone_id  = aws_route53_zone.local.zone_id
+  zone_id  = aws_route53_zone.docker_cache[each.key].zone_id
   name     = each.value.metadata.0.annotations.proxying
   type     = "CNAME"
   ttl      = "300"

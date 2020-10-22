@@ -25,7 +25,7 @@ locals {
     "live-restore" : true,
     "max-concurrent-downloads" : 10
     #"registry-mirrors" : ["http://${local.docker_cache_url}:5000"] # https://docs.docker.com/registry/recipes/mirror/#configure-the-cache
-    "insecure-registries" : var.docker_registry_proxies.*.hostname # https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
+    "insecure-registries" : values(var.docker_registry_proxies).*.hostname # https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
   })
 }
 
