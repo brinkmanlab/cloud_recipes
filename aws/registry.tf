@@ -289,11 +289,19 @@ resource "aws_route53_zone" "docker_cache" {
   }
 }
 
-resource "aws_route53_record" "local" {
+data "aws_lb" "docker_cache" {
+  for_each = var.docker_registry_proxies
+  name     = split("-", kubernetes_service.docker_cache[each.key].load_balancer_ingress.0.hostname)[0]
+}
+
+resource "aws_route53_record" "docker_cache" {
   for_each = kubernetes_service.docker_cache
   zone_id  = aws_route53_zone.docker_cache[each.key].zone_id
   name     = each.value.metadata.0.annotations.proxying
-  type     = "CNAME"
-  ttl      = "300"
-  records  = each.value.load_balancer_ingress[*].hostname
+  type     = "A"
+  alias {
+    evaluate_target_health = false
+    name                   = "dualstack.${each.value.load_balancer_ingress.0.hostname}"
+    zone_id                = data.aws_lb.docker_cache[each.key].zone_id
+  }
 }
