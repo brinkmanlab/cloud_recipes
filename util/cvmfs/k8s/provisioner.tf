@@ -1,3 +1,14 @@
+/*
+The external-provisioner is a sidecar container that dynamically provisions volumes by calling ControllerCreateVolume
+and ControllerDeleteVolume functions of CSI drivers. It is necessary because internal persistent volume controller
+running in Kubernetes controller-manager does not have any direct interfaces to CSI drivers.
+
+The external-provisioner is an external controller that monitors PersistentVolumeClaim objects created by user and
+creates/deletes volumes for them.
+
+See https://github.com/kubernetes-csi/external-provisioner
+*/
+
 resource "kubernetes_service_account" "provisioner" {
   metadata {
     name      = "cvmfs-provisioner"
@@ -141,12 +152,13 @@ resource "kubernetes_service" "provisioner" {
   }
 }
 
-resource "kubernetes_deployment" "provisioner" {
+resource "kubernetes_stateful_set" "provisioner" {
   metadata {
     generate_name = "csi-cvmfsplugin-provisioner-"
     namespace     = local.namespace.metadata.0.name
   }
   spec {
+    service_name = "csi-cvmfsplugin-provisioner"
     selector {
       match_labels = {
         App = "csi-cvmfsplugin-provisioner"
@@ -188,8 +200,7 @@ resource "kubernetes_deployment" "provisioner" {
           args = [
             "--v=5",
             "--csi-address=$(ADDRESS)",
-            "leader-election=true",
-            "--leader-election-type=leases",
+            "--provisioner=csi-cvmfsplugin",
           ]
           env {
             name  = "ADDRESS"
@@ -200,118 +211,11 @@ resource "kubernetes_deployment" "provisioner" {
             name       = "socket-dir"
           }
         }
-        container {
-          name              = "csi-cvmfsplugin"
-          image             = "computecanada/csi-cvmfsplugin:${var.cvmfs_csi_tag}"
-          image_pull_policy = "IfNotPresent"
-          security_context {
-            privileged = true
-            capabilities {
-              add = ["SYS_ADMIN"]
-            }
-          }
-          args = [
-            "--nodeid=$(NODE_ID)",
-            "--type=cvmfs",
-            "--controllerserver=true",
-            "--endpoint=$(CSI_ENDPOINT)",
-            "--v=5",
-            "--drivername=cvmfs.csi.cern.ch",
-            "--metadatastorage=k8s_configmap",
-            "--pidlimit=-1",
-          ]
-          env {
-            name = "NODE_ID"
-            value_from {
-              field_ref {
-                field_path = "spec.nodeName"
-              }
-            }
-          }
-          env {
-            name = "POD_NAMESPACE"
-            value_from {
-              field_ref {
-                field_path = "metadata.namespace"
-              }
-            }
-          }
-          env {
-            name  = "CSI_ENDPOINT"
-            value = "unix:///csi/csi-provisioner.sock"
-          }
-          volume_mount {
-            mount_path = "/csi"
-            name       = "socket-dir"
-          }
-          volume_mount {
-            mount_path = "/sys"
-            name       = "host-sys"
-          }
-          volume_mount {
-            mount_path = "/lib/modules"
-            name       = "lib-modules"
-            read_only  = true
-          }
-          volume_mount {
-            mount_path = "/dev"
-            name       = "host-dev"
-          }
-          volume_mount {
-            mount_path = "/etc/cvmfs-csi-config/"
-            name       = "cvmfs-csi-config"
-          }
-          volume_mount {
-            mount_path = "/tmp/csi/keys"
-            name       = "keys-tmp-dir"
-          }
-          volume_mount {
-            mount_path = "/etc/cvmfs/default.local"
-            name       = "cvmfs-config"
-            sub_path   = "cvmfs-override"
-          }
-        }
         volume {
           name = "socket-dir"
           host_path {
             path = "/var/lib/kubelet/plugins/cvmfs.csi.cern.ch"
             type = "DirectoryOrCreate"
-          }
-        }
-        volume {
-          name = "host-sys"
-          host_path {
-            path = "/sys"
-          }
-        }
-        volume {
-          name = "lib-modules"
-          host_path {
-            path = "/lib/modules"
-          }
-        }
-        volume {
-          name = "host-dev"
-          host_path {
-            path = "/dev"
-          }
-        }
-        volume {
-          name = "cvmfs-csi-config"
-          config_map {
-            name = kubernetes_config_map.csi_config.metadata.0.name
-          }
-        }
-        volume {
-          name = "keys-tmp-dir"
-          empty_dir {
-            medium = "Memory"
-          }
-        }
-        volume {
-          name = "cvmfs-config"
-          config_map {
-            name = kubernetes_config_map.config.metadata.0.name
           }
         }
       }

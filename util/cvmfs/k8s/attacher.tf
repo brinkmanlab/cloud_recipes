@@ -1,3 +1,24 @@
+/*
+The external-attacher is a sidecar container that attaches volumes to nodes by calling ControllerPublish and
+ControllerUnpublish functions of CSI drivers. It is necessary because internal Attach/Detach controller running
+in Kubernetes controller-manager does not have any direct interfaces to CSI drivers.
+
+In Kubernetes, the term attach means 3rd party volume attachment to a node. This is common in cloud environments,
+where the cloud API is able to attach a volume to a node without any code running on the node. In CSI terminology,
+this corresponds to the ControllerPublish call.
+
+Detach is the reverse operation, 3rd party volume detachment from a node, ControllerUnpublish in CSI terminology.
+
+It is not an attach/detach operation performed by a code running on a node, such as an attachment of iSCSI or Fibre
+Channel volumes. These are typically performed during NodeStage and NodeUnstage CSI calls and are not done by the
+external-attacher.
+
+The external-attacher is an external controller that monitors VolumeAttachment objects created by controller-manager
+and attaches/detaches volumes to/from nodes (i.e. calls ControllerPublish/ControllerUnpublish.
+
+See https://github.com/kubernetes-csi/external-attacher
+*/
+
 resource "kubernetes_service_account" "attacher" {
   metadata {
     name      = "cvmfs-attacher"

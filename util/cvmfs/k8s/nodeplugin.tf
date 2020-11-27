@@ -1,3 +1,13 @@
+/*
+The node-driver-registrar is a sidecar container that registers the CSI driver with Kubelet using the kubelet plugin
+registration mechanism.
+
+This is necessary because Kubelet is responsible for issuing CSI NodeGetInfo, NodeStageVolume, NodePublishVolume calls.
+The node-driver-registrar registers your CSI driver with Kubelet so that it knows which Unix domain socket to issue the CSI calls on.
+
+See https://github.com/kubernetes-csi/node-driver-registrar
+*/
+
 resource "kubernetes_service_account" "nodeplugin" {
   metadata {
     name      = "cvmfs-csi-nodeplugin"
@@ -92,7 +102,7 @@ resource "kubernetes_daemonset" "plugin" {
           args = [
             "--v=5",
             "--csi-address=/csi/csi.sock",
-            "--kubelet-registration-path=/var/lib/kubelet/plugins/cvmfs.csi.cern.ch/csi.sock",
+            "--kubelet-registration-path=${local.plugin_dir}/csi.sock",
           ]
           lifecycle {
             pre_stop {
@@ -120,7 +130,7 @@ resource "kubernetes_daemonset" "plugin" {
         }
         container {
           name              = "csi-cvmfsplugin"
-          image             = "computecanada/csi-cvmfsplugin:${var.cvmfs_csi_tag}"
+          image             = "cloudve/csi-cvmfsplugin:${var.cvmfs_csi_tag}"
           image_pull_policy = "IfNotPresent"
           security_context {
             privileged = true
@@ -131,13 +141,11 @@ resource "kubernetes_daemonset" "plugin" {
           }
           args = [
             "--nodeid=$(NODE_ID)",
-            "--type=cvmfs",
-            "--nodeserver=true",
             "--endpoint=$(CSI_ENDPOINT)",
             "--v=5",
-            "--drivername=cvmfs.csi.cern.ch",
-            "--metadatastorage=k8s_configmap",
-            "--mountcachedir=/mount-cache-dir",
+            "--drivername=csi-cvmfsplugin",
+            #"--metadatastorage=k8s_configmap",
+            #"--mountcachedir=/mount-cache-dir",
           ]
           env {
             name = "NODE_ID"
@@ -158,10 +166,6 @@ resource "kubernetes_daemonset" "plugin" {
           env {
             name  = "CSI_ENDPOINT"
             value = "unix:///csi/csi-provisioner.sock"
-          }
-          volume_mount {
-            mount_path = "/mount-cache-dir"
-            name       = "mount-cache-dir"
           }
           volume_mount {
             mount_path = "/csi"
@@ -191,27 +195,26 @@ resource "kubernetes_daemonset" "plugin" {
             name       = "host-dev"
           }
           volume_mount {
-            mount_path = "/etc/cvmfs-csi-config/"
-            name       = "cvmfs-csi-config"
-          }
-          volume_mount {
-            mount_path = "/tmp/csi/keys"
-            name       = "keys-tmp-dir"
+            mount_path = local.CVMFS_KEYS_DIR
+            name       = "cvmfs-keys"
           }
           volume_mount {
             mount_path = "/etc/cvmfs/default.local"
             name       = "cvmfs-config"
-            sub_path   = "cvmfs-override"
+          }
+          volume_mount {
+            mount_path = local.CVMFS_CACHE_BASE
+            name       = "cvmfs-local-cache"
           }
         }
         volume {
-          name = "mount-cache-dir"
+          name = "cvmfs-local-cache"
           empty_dir {}
         }
         volume {
           name = "socket-dir"
           host_path {
-            path = "/var/lib/kubelet/plugins/cvmfs.csi.cern.ch/"
+            path = local.plugin_dir
             type = "DirectoryOrCreate"
           }
         }
@@ -223,7 +226,7 @@ resource "kubernetes_daemonset" "plugin" {
           }
         }
         volume {
-          name = "mountpoint-dir"
+          name = "pods-mount-dir"
           host_path {
             path = "/var/lib/kubelet/pods"
             type = "DirectoryOrCreate"
@@ -255,21 +258,16 @@ resource "kubernetes_daemonset" "plugin" {
           }
         }
         volume {
-          name = "cvmfs-csi-config"
-          config_map {
-            name = kubernetes_config_map.csi_config.metadata.0.name
-          }
-        }
-        volume {
-          name = "keys-tmp-dir"
-          empty_dir {
-            medium = "Memory"
-          }
-        }
-        volume {
           name = "cvmfs-config"
-          config_map {
+          config_map_key_ref {
+            key  = "default.local"
             name = kubernetes_config_map.config.metadata.0.name
+          }
+        }
+        volume {
+          name = "cvmfs-keys"
+          config_map {
+            name = kubernetes_config_map.repo_keys.metadata.0.name
           }
         }
       }
