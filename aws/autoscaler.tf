@@ -37,7 +37,6 @@ resource "aws_iam_role" "autoscaler" {
 
 data "aws_iam_policy_document" "autoscaler" {
   statement {
-    sid    = "EKSAutoscaler"
     effect = "Allow"
     actions = [
       "autoscaling:DescribeAutoScalingGroups",
@@ -54,7 +53,7 @@ data "aws_iam_policy_document" "autoscaler" {
 }
 
 resource "aws_iam_policy" "autoscaler" {
-  name        = "autoscaler"
+  name_prefix = "autoscaler"
   path        = "/${local.instance}/"
   description = "Autoscaler cluster policy"
 
