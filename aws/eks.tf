@@ -42,6 +42,9 @@ module "eks" {
   manage_aws_auth               = true
   cluster_create_security_group = true
   cluster_enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  map_accounts                  = var.map_accounts
+  map_roles                     = var.map_roles
+  map_users                     = var.map_users
 
   worker_groups = [
     {
