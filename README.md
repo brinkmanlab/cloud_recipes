@@ -15,6 +15,10 @@ Refer to the Kubernetes section for the remaining information.
 
 ## Azure
 
+## Kubernetes
+To check the state of the cluster run `kubectl describe node`.
+To restart a deployment run `kubectl rollout restart -n <namespace> deployment <deployment name>`.
+
 ## Utilities
 Various Kubernetes utility modules are included in the `./util` folder.
 The dashboard is included in all destinations by default.
@@ -26,7 +30,7 @@ To access it, [install kubectl](https://kubernetes.io/docs/tasks/tools/install-k
 Visit [here](http://localhost:8001/api/v1/namespaces/kube-system/services/https:dashboard-chart-kubernetes-dashboard:https/proxy/#/login) to
 access the dashboard.
 
-To check the state of the cluster run `kubectl describe node`.
+
 
 ### CVMFS CSI driver
 
