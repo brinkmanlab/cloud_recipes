@@ -16,30 +16,9 @@ resource "kubernetes_service_account" "provisioner" {
   }
 }
 
-resource "kubernetes_cluster_role" "provisioner_aggregate" {
-  metadata {
-    name = "cvmfs-external-provisioner-runner-aggregate"
-  }
-  aggregation_rule {
-    cluster_role_selectors {
-      match_labels = {
-        "rbac.cvmfs.csi.cern.ch/aggregate-to-cvmfs-external-provisioner-runner" = true
-      }
-    }
-  }
-}
-
 resource "kubernetes_cluster_role" "provisioner" {
   metadata {
     name = "cvmfs-external-provisioner-runner"
-    labels = {
-      "rbac.cvmfs.csi.cern.ch/aggregate-to-cvmfs-external-provisioner-runner" = true
-    }
-  }
-  rule {
-    api_groups = [""]
-    resources  = ["nodes"]
-    verbs      = ["get", "list", "watch"]
   }
   rule {
     api_groups = [""]
@@ -89,7 +68,7 @@ resource "kubernetes_cluster_role_binding" "provisioner" {
   }
   role_ref {
     kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.provisioner_aggregate.metadata.0.name
+    name      = kubernetes_cluster_role.provisioner.metadata.0.name
     api_group = "rbac.authorization.k8s.io"
   }
 }

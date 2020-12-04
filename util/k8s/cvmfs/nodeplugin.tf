@@ -15,30 +15,9 @@ resource "kubernetes_service_account" "nodeplugin" {
   }
 }
 
-resource "kubernetes_cluster_role" "nodeplugin_aggregate" {
-  metadata {
-    name = "cvmfs-csi-nodeplugin"
-  }
-  aggregation_rule {
-    cluster_role_selectors {
-      match_labels = {
-        "rbac.cvmfs.csi.cern.ch/aggregate-to-cvmfs-csi-nodeplugin" = true
-      }
-    }
-  }
-}
-
 resource "kubernetes_cluster_role" "nodeplugin" {
   metadata {
     name = "cvmfs-csi-nodeplugin-rules"
-    labels = {
-      "rbac.cvmfs.csi.cern.ch/aggregate-to-cvmfs-csi-nodeplugin" = true
-    }
-  }
-  rule {
-    api_groups = [""]
-    resources  = ["configmaps"]
-    verbs      = ["get", "list"]
   }
   rule {
     api_groups = [""]
@@ -73,7 +52,7 @@ resource "kubernetes_cluster_role_binding" "nodeplugin" {
   }
   role_ref {
     kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.nodeplugin_aggregate.metadata.0.name
+    name      = kubernetes_cluster_role.nodeplugin.metadata.0.name
     api_group = "rbac.authorization.k8s.io"
   }
 }
