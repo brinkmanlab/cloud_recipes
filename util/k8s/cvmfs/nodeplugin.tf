@@ -75,8 +75,9 @@ resource "kubernetes_daemonset" "plugin" {
         }
       }
       spec {
-        service_account_name = kubernetes_service_account.nodeplugin.metadata.0.name
-        host_network         = true
+        service_account_name            = kubernetes_service_account.nodeplugin.metadata.0.name
+        automount_service_account_token = true
+        host_network                    = true
         container {
           name  = "driver-registrar"
           image = "quay.io/k8scsi/csi-node-driver-registrar:${var.csi_node_driver_tag}"
@@ -102,7 +103,7 @@ resource "kubernetes_daemonset" "plugin" {
           }
           volume_mount {
             mount_path = "/csi"
-            name       = "socket-dir"
+            name       = "plugin-dir"
           }
           volume_mount {
             mount_path = "/registration"
@@ -146,20 +147,15 @@ resource "kubernetes_daemonset" "plugin" {
           }
           env {
             name  = "CSI_ENDPOINT"
-            value = "unix:///csi/csi-provisioner.sock"
+            value = "unix:/${local.plugin_dir}/csi.sock"
           }
           volume_mount {
-            mount_path = "/csi"
-            name       = "socket-dir"
+            mount_path = local.plugin_dir
+            name       = "plugin-dir"
           }
           volume_mount {
             mount_path        = "/var/lib/kubelet/pods"
             name              = "pods-mount-dir"
-            mount_propagation = "Bidirectional"
-          }
-          volume_mount {
-            mount_path        = "/var/lib/kubelet/plugins"
-            name              = "plugin-dir"
             mount_propagation = "Bidirectional"
           }
           volume_mount {
@@ -180,7 +176,7 @@ resource "kubernetes_daemonset" "plugin" {
             name       = "cvmfs-keys"
           }
           volume_mount {
-            mount_path = "/etc/cvmfs/default.local"
+            mount_path = "/etc/cvmfs"
             name       = "cvmfs-config"
           }
           volume_mount {
@@ -188,16 +184,12 @@ resource "kubernetes_daemonset" "plugin" {
             name       = "cvmfs-local-cache"
           }
         }
+        node_selector = {
+          WorkClass = "service"
+        }
         volume {
           name = "cvmfs-local-cache"
           empty_dir {}
-        }
-        volume {
-          name = "socket-dir"
-          host_path {
-            path = local.plugin_dir
-            type = "DirectoryOrCreate"
-          }
         }
         volume {
           name = "registration-dir"
@@ -216,7 +208,7 @@ resource "kubernetes_daemonset" "plugin" {
         volume {
           name = "plugin-dir"
           host_path {
-            path = "/var/lib/kubelet/plugins"
+            path = local.plugin_dir
             type = "Directory"
           }
         }

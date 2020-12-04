@@ -100,6 +100,9 @@ resource "kubernetes_stateful_set" "attacher" {
         App = "csi-cvmfsplugin-attacher"
       }
     }
+    update_strategy {
+      type = "RollingUpdate"
+    }
     template {
       metadata {
         labels = {
@@ -107,7 +110,8 @@ resource "kubernetes_stateful_set" "attacher" {
         }
       }
       spec {
-        service_account_name = kubernetes_service_account.attacher.metadata.0.name
+        service_account_name            = kubernetes_service_account.attacher.metadata.0.name
+        automount_service_account_token = true
         container {
           name              = "csi-attacher"
           image             = "quay.io/k8scsi/csi-attacher:${var.csi_attacher_tag}"
@@ -115,17 +119,20 @@ resource "kubernetes_stateful_set" "attacher" {
           args              = ["--v=5", "--csi-address=$(ADDRESS)"]
           env {
             name  = "ADDRESS"
-            value = "/var/lib/kubelet/plugins/csi-cvmfsplugin/csi.sock"
+            value = "${local.plugin_dir}/csi.sock"
           }
           volume_mount {
-            mount_path = "/var/lib/kubelet/plugins/csi-cvmfsplugin"
-            name       = "socket-dir"
+            mount_path = local.plugin_dir
+            name       = "plugin-dir"
           }
         }
+        node_selector = {
+          WorkClass = "service"
+        }
         volume {
-          name = "socket-dir"
+          name = "plugin-dir"
           host_path {
-            path = "/var/lib/kubelet/plugins/csi-cvmfsplugin"
+            path = local.plugin_dir
             type = "DirectoryOrCreate"
           }
         }

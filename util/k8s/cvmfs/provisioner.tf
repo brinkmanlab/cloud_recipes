@@ -137,11 +137,14 @@ resource "kubernetes_stateful_set" "provisioner" {
     namespace     = local.namespace.metadata.0.name
   }
   spec {
-    service_name = "csi-cvmfsplugin-provisioner"
+    service_name = kubernetes_service.provisioner.metadata.0.name
     selector {
       match_labels = {
         App = "csi-cvmfsplugin-provisioner"
       }
+    }
+    update_strategy {
+      type = "RollingUpdate"
     }
     template {
       metadata {
@@ -150,28 +153,30 @@ resource "kubernetes_stateful_set" "provisioner" {
         }
       }
       spec {
-        service_account_name = kubernetes_service_account.provisioner.metadata.0.name
+        service_account_name            = kubernetes_service_account.provisioner.metadata.0.name
+        automount_service_account_token = true
         container {
           name              = "csi-provisioner"
           image             = "quay.io/k8scsi/csi-provisioner:${var.csi_provisioner_tag}"
           image_pull_policy = "IfNotPresent"
           args = [
             "--csi-address=$(ADDRESS)",
+            #"--provisioner=csi-cvmfsplugin",
             "--v=5",
-            "--timeout=60s",
-            "--enable-leader-election=true",
+            #"--timeout=60s",
+            /*"--enable-leader-election=true",
             "--leader-election-type=leases",
-            "--retry-interval-start=500ms",
+            "--retry-interval-start=500ms",*/
           ]
           env {
             name  = "ADDRESS"
-            value = "unix:///csi/csi-provisioner.sock"
+            value = "/csi/csi.sock"
           }
           volume_mount {
             mount_path = "/csi"
             name       = "socket-dir"
           }
-        }
+        } /*
         container {
           name              = "csi-cvmfsplugin-attacher"
           image             = "quay.io/k8scsi/csi-attacher:${var.csi_attacher_tag}"
@@ -183,17 +188,20 @@ resource "kubernetes_stateful_set" "provisioner" {
           ]
           env {
             name  = "ADDRESS"
-            value = "/csi/csi-provisioner.sock"
+            value = "/csi/csi.sock"
           }
           volume_mount {
             mount_path = "/csi"
             name       = "socket-dir"
           }
+        }*/
+        node_selector = {
+          WorkClass = "service"
         }
         volume {
           name = "socket-dir"
           host_path {
-            path = "/var/lib/kubelet/plugins/cvmfs.csi.cern.ch"
+            path = "/var/lib/kubelet/plugins/csi-cvmfsplugin"
             type = "DirectoryOrCreate"
           }
         }

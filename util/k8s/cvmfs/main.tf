@@ -21,7 +21,6 @@ resource "kubernetes_config_map" "config" {
   data = { #TODO set up s3fs to host alien cache
     "default.local" = <<-EOF
       CVMFS_SERVER_URL="${join(";", var.servers)}"
-      CVMFS_REPOSITORIES="${join(",", keys(var.cvmfs_keys))}"
       CVMFS_KEYS_DIR="${local.CVMFS_KEYS_DIR}"
       CVMFS_USE_GEOAPI=yes
       CVMFS_HTTP_PROXY="DIRECT"
@@ -44,40 +43,14 @@ resource "kubernetes_config_map" "repo_keys" {
   data = { for repo, key in var.cvmfs_keys : "${repo}.pub" => key }
 }
 
-resource "kubernetes_csi_driver" "plugin" {
+resource "kubernetes_storage_class" "repos" {
+  depends_on          = [kubernetes_daemonset.plugin, kubernetes_stateful_set.provisioner, kubernetes_stateful_set.attacher]
+  for_each            = { for repo in keys(var.cvmfs_keys) : repo => repo }
+  storage_provisioner = "csi-cvmfsplugin"
   metadata {
-    name = "csi-cvmfsplugin"
+    name = "cvmfs-${each.key}"
   }
-  spec {
-    attach_required   = true
-    pod_info_on_mount = true
+  parameters = {
+    repository = each.value
   }
 }
-
-/*
-resource "kubernetes_cluster_role_binding" "psp" {
-  metadata {
-    name = "cvmfs-psp"
-  }
-  role_ref {
-    api_group = "rbac.authorization.k8s.io"
-    kind = "ClusterRole"
-    name = "psp:privileged-user"
-  }
-  subject {
-    kind = "ServiceAccount"
-    name = kubernetes_service_account.nodeplugin.metadata.0.name
-    namespace = kubernetes_namespace.cvmfs.metadata.0.name
-  }
-  subject {
-    kind = "ServiceAccount"
-    name = kubernetes_service_account.attacher.metadata.0.name
-    namespace = kubernetes_namespace.cvmfs.metadata.0.name
-  }
-  subject {
-    kind = "ServiceAccount"
-    name = kubernetes_service_account.provisioner.metadata.0.name
-    namespace = kubernetes_namespace.cvmfs.metadata.0.name
-  }
-}
-*/
