@@ -123,7 +123,7 @@ resource "kubernetes_daemonset" "plugin" {
           }
           args = [
             "--nodeid=$(NODE_ID)",
-            "--endpoint=$(CSI_ENDPOINT)",
+            "--endpoint=unix://csi/csi.sock",
             "--v=5",
             "--drivername=csi-cvmfsplugin",
             #"--metadatastorage=k8s_configmap",
@@ -137,20 +137,8 @@ resource "kubernetes_daemonset" "plugin" {
               }
             }
           }
-          env {
-            name = "POD_NAMESPACE"
-            value_from {
-              field_ref {
-                field_path = "metadata.namespace"
-              }
-            }
-          }
-          env {
-            name  = "CSI_ENDPOINT"
-            value = "unix:/${local.plugin_dir}/csi.sock"
-          }
           volume_mount {
-            mount_path = local.plugin_dir
+            mount_path = "/csi"
             name       = "plugin-dir"
           }
           volume_mount {

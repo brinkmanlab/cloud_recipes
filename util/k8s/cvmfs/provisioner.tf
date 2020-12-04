@@ -112,39 +112,16 @@ resource "kubernetes_role_binding" "provisioner" {
   }
 }
 
-resource "kubernetes_service" "provisioner" {
-  metadata {
-    generate_name = "csi-cvmfsplugin-provisioner-"
-    namespace     = local.namespace.metadata.0.name
-    labels = {
-      App = "csi-cvmfsplugin-provisioner"
-    }
-  }
-  spec {
-    selector = {
-      App = "csi-cvmfsplugin-provisioner"
-    }
-    port {
-      name = "dummy"
-      port = 12345
-    }
-  }
-}
-
-resource "kubernetes_stateful_set" "provisioner" {
+resource "kubernetes_deployment" "provisioner" {
   metadata {
     generate_name = "csi-cvmfsplugin-provisioner-"
     namespace     = local.namespace.metadata.0.name
   }
   spec {
-    service_name = kubernetes_service.provisioner.metadata.0.name
     selector {
       match_labels = {
         App = "csi-cvmfsplugin-provisioner"
       }
-    }
-    update_strategy {
-      type = "RollingUpdate"
     }
     template {
       metadata {
@@ -160,7 +137,7 @@ resource "kubernetes_stateful_set" "provisioner" {
           image             = "quay.io/k8scsi/csi-provisioner:${var.csi_provisioner_tag}"
           image_pull_policy = "IfNotPresent"
           args = [
-            "--csi-address=$(ADDRESS)",
+            "--csi-address=/csi/csi.sock",
             #"--provisioner=csi-cvmfsplugin",
             "--v=5",
             #"--timeout=60s",
@@ -168,41 +145,61 @@ resource "kubernetes_stateful_set" "provisioner" {
             "--leader-election-type=leases",
             "--retry-interval-start=500ms",*/
           ]
-          env {
-            name  = "ADDRESS"
-            value = "/csi/csi.sock"
-          }
           volume_mount {
             mount_path = "/csi"
             name       = "socket-dir"
           }
-        } /*
+        }
         container {
-          name              = "csi-cvmfsplugin-attacher"
-          image             = "quay.io/k8scsi/csi-attacher:${var.csi_attacher_tag}"
+          name              = "csi-cvmfsplugin"
+          image             = "cloudve/csi-cvmfsplugin:${var.cvmfs_csi_tag}"
           image_pull_policy = "IfNotPresent"
           args = [
+            "--nodeid=$(NODE_ID)",
+            "--endpoint=unix://csi/csi.sock",
             "--v=5",
-            "--csi-address=$(ADDRESS)",
-            "--provisioner=csi-cvmfsplugin",
+            "--drivername=csi-cvmfsplugin",
+            #"--metadatastorage=k8s_configmap",
+            #"--mountcachedir=/mount-cache-dir",
           ]
           env {
-            name  = "ADDRESS"
-            value = "/csi/csi.sock"
+            name = "NODE_ID"
+            value_from {
+              field_ref {
+                field_path = "spec.nodeName"
+              }
+            }
           }
           volume_mount {
             mount_path = "/csi"
             name       = "socket-dir"
           }
-        }*/
+          volume_mount {
+            mount_path = local.CVMFS_KEYS_DIR
+            name       = "cvmfs-keys"
+          }
+          volume_mount {
+            mount_path = "/etc/cvmfs"
+            name       = "cvmfs-config"
+          }
+        }
         node_selector = {
           WorkClass = "service"
         }
         volume {
           name = "socket-dir"
-          host_path {
-            path = "/var/lib/kubelet/plugins/csi-cvmfsplugin"
-            type = "DirectoryOrCreate"
+          empty_dir {}
+        }
+        volume {
+          name = "cvmfs-config"
+          config_map {
+            name = kubernetes_config_map.config.metadata.0.name
+          }
+        }
+        volume {
+          name = "cvmfs-keys"
+          config_map {
+            name = kubernetes_config_map.repo_keys.metadata.0.name
           }
         }
       }
