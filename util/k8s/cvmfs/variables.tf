@@ -1,4 +1,5 @@
 variable "namespace" {
+  default     = null
   description = "Instance of kubernetes_namespace to provision instance resources under"
 }
 
@@ -23,8 +24,8 @@ variable "csi_node_driver_tag" {
 }
 
 variable "cvmfs_keys" {
-  type        = set(string)
-  description = "CVMFS Repository public keys"
+  type        = map(string)
+  description = "CVMFS Repository public keys keyed on repo name"
 }
 
 variable "servers" {

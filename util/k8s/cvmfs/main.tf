@@ -1,5 +1,5 @@
 locals {
-  namespace         = kubernetes_namespace.cvmfs
+  namespace         = var.namespace != null ? var.namespace : kubernetes_namespace.cvmfs[0]
   CVMFS_KEYS_DIR    = "/etc/cvmfs/keys/"
   CVMFS_CACHE_BASE  = "/mnt/cvmfs/localcache"
   CVMFS_ALIEN_CACHE = "/mnt/cvmfs/aliencache"
@@ -7,6 +7,7 @@ locals {
 }
 
 resource "kubernetes_namespace" "cvmfs" {
+  count = var.namespace == null ? 1 : 0
   metadata {
     name = "cvmfs"
   }
@@ -20,6 +21,7 @@ resource "kubernetes_config_map" "config" {
   data = { #TODO set up s3fs to host alien cache
     "default.local" = <<-EOF
       CVMFS_SERVER_URL="${join(";", var.servers)}"
+      CVMFS_REPOSITORIES="${join(",", keys(var.cvmfs_keys))}"
       CVMFS_KEYS_DIR="${local.CVMFS_KEYS_DIR}"
       CVMFS_USE_GEOAPI=yes
       CVMFS_HTTP_PROXY="DIRECT"
@@ -39,13 +41,12 @@ resource "kubernetes_config_map" "repo_keys" {
     generate_name = "cvmfs-repo-keys-"
     namespace     = local.namespace.metadata.0.name
   }
-  data = { for i, key in var.cvmfs_keys : "repo_key${i}.pub" => key }
+  data = { for repo, key in var.cvmfs_keys : "${repo}.pub" => key }
 }
 
 resource "kubernetes_csi_driver" "plugin" {
   metadata {
-    name      = "csi-cvmfsplugin"
-    namespace = local.namespace.metadata.0.name
+    name = "csi-cvmfsplugin"
   }
   spec {
     attach_required   = true

@@ -18,7 +18,7 @@ resource "kubernetes_service_account" "provisioner" {
 
 resource "kubernetes_cluster_role" "provisioner_aggregate" {
   metadata {
-    name = "cvmfs-external-provisioner-runner"
+    name = "cvmfs-external-provisioner-runner-aggregate"
   }
   aggregation_rule {
     cluster_role_selectors {
@@ -31,7 +31,7 @@ resource "kubernetes_cluster_role" "provisioner_aggregate" {
 
 resource "kubernetes_cluster_role" "provisioner" {
   metadata {
-    name = "cvmfs-external-attacher-runner"
+    name = "cvmfs-external-provisioner-runner"
     labels = {
       "rbac.cvmfs.csi.cern.ch/aggregate-to-cvmfs-external-provisioner-runner" = true
     }

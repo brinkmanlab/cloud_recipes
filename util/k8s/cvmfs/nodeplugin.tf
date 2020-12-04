@@ -81,11 +81,13 @@ resource "kubernetes_cluster_role_binding" "nodeplugin" {
 resource "kubernetes_daemonset" "plugin" {
   metadata {
     name      = "csi-cvmfsplugin"
-    namespace = kubernetes_namespace.cvmfs.metadata.0.name
+    namespace = local.namespace.metadata.0.name
   }
   spec {
     selector {
-      App = "csi-cvmfsplugin"
+      match_labels = {
+        App = "csi-cvmfsplugin"
+      }
     }
     template {
       metadata {
@@ -173,7 +175,7 @@ resource "kubernetes_daemonset" "plugin" {
           }
           volume_mount {
             mount_path        = "/var/lib/kubelet/pods"
-            name              = "mountpoint-dir"
+            name              = "pods-mount-dir"
             mount_propagation = "Bidirectional"
           }
           volume_mount {
@@ -259,8 +261,7 @@ resource "kubernetes_daemonset" "plugin" {
         }
         volume {
           name = "cvmfs-config"
-          config_map_key_ref {
-            key  = "default.local"
+          config_map {
             name = kubernetes_config_map.config.metadata.0.name
           }
         }

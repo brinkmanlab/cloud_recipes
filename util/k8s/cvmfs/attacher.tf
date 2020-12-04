@@ -54,8 +54,7 @@ resource "kubernetes_cluster_role" "attacher" {
 
 resource "kubernetes_cluster_role_binding" "attacher" {
   metadata {
-    name      = "cvmfs-attacher-role"
-    namespace = local.namespace.metadata.0.name
+    name = "cvmfs-attacher-role"
   }
   subject {
     kind      = "ServiceAccount"
@@ -97,7 +96,9 @@ resource "kubernetes_stateful_set" "attacher" {
     service_name = kubernetes_service.attacher.metadata.0.name
     replicas     = 1
     selector {
-      App = "csi-cvmfsplugin-attacher"
+      match_labels = {
+        App = "csi-cvmfsplugin-attacher"
+      }
     }
     template {
       metadata {

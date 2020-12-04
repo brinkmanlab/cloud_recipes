@@ -1,1 +1,0 @@
-Translated from https://github.com/cernops/cvmfs-csi
