@@ -5,12 +5,12 @@ variable "namespace" {
 
 variable "csi_attacher_tag" {
   type    = string
-  default = "v2.1.1"
+  default = "v3.0.0"
 }
 
 variable "csi_provisioner_tag" {
   type    = string
-  default = "v1.5.0"
+  default = "v2.0.2"
 }
 
 variable "cvmfs_csi_tag" {
@@ -20,7 +20,7 @@ variable "cvmfs_csi_tag" {
 
 variable "csi_node_driver_tag" {
   type    = string
-  default = "v1.2.0"
+  default = "v2.0.1"
 }
 
 variable "cvmfs_keys" {

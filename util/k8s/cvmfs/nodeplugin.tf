@@ -89,7 +89,7 @@ resource "kubernetes_daemonset" "plugin" {
           lifecycle {
             pre_stop {
               exec {
-                command = ["/bin/sh", "-c", "rm -rf /registration/csi-cvmfsplugin /registration/csi-cvmfsplugin-reg.sock"]
+                command = ["/bin/sh", "-c", "rm -rf /registration/${local.driver_name} /registration/${local.driver_name}-reg.sock"]
               }
             }
           }
@@ -125,7 +125,7 @@ resource "kubernetes_daemonset" "plugin" {
             "--nodeid=$(NODE_ID)",
             "--endpoint=unix://csi/csi.sock",
             "--v=5",
-            "--drivername=csi-cvmfsplugin",
+            "--drivername=${local.driver_name}",
             #"--metadatastorage=k8s_configmap",
             #"--mountcachedir=/mount-cache-dir",
           ]
@@ -164,8 +164,9 @@ resource "kubernetes_daemonset" "plugin" {
             name       = "cvmfs-keys"
           }
           volume_mount {
-            mount_path = "/etc/cvmfs"
+            mount_path = "/etc/cvmfs/default.local"
             name       = "cvmfs-config"
+            sub_path   = "default.local"
           }
           volume_mount {
             mount_path = local.CVMFS_CACHE_BASE

@@ -48,7 +48,12 @@ resource "kubernetes_cluster_role" "attacher" {
   rule {
     api_groups = ["storage.k8s.io"]
     resources  = ["volumeattachments"]
-    verbs      = ["get", "list", "watch", "update"]
+    verbs      = ["get", "list", "watch", "update", "patch"]
+  }
+  rule {
+    api_groups = ["storage.k8s.io"]
+    resources  = ["volumeattachments/status"]
+    verbs      = ["patch"]
   }
 }
 
@@ -100,56 +105,14 @@ resource "kubernetes_deployment" "attacher" {
             name       = "socket-dir"
           }
         }
-        container {
-          name              = "csi-cvmfsplugin"
-          image             = "cloudve/csi-cvmfsplugin:${var.cvmfs_csi_tag}"
-          image_pull_policy = "IfNotPresent"
-          args = [
-            "--nodeid=$(NODE_ID)",
-            "--endpoint=unix://csi/csi.sock",
-            "--v=5",
-            "--drivername=csi-cvmfsplugin",
-            #"--metadatastorage=k8s_configmap",
-            #"--mountcachedir=/mount-cache-dir",
-          ]
-          env {
-            name = "NODE_ID"
-            value_from {
-              field_ref {
-                field_path = "spec.nodeName"
-              }
-            }
-          }
-          volume_mount {
-            mount_path = "/csi"
-            name       = "socket-dir"
-          }
-          volume_mount {
-            mount_path = local.CVMFS_KEYS_DIR
-            name       = "cvmfs-keys"
-          }
-          volume_mount {
-            mount_path = "/etc/cvmfs"
-            name       = "cvmfs-config"
-          }
-        }
         node_selector = {
           WorkClass = "service"
         }
         volume {
           name = "socket-dir"
-          empty_dir {}
-        }
-        volume {
-          name = "cvmfs-config"
-          config_map {
-            name = kubernetes_config_map.config.metadata.0.name
-          }
-        }
-        volume {
-          name = "cvmfs-keys"
-          config_map {
-            name = kubernetes_config_map.repo_keys.metadata.0.name
+          host_path {
+            path = local.plugin_dir
+            type = "DirectoryOrCreate"
           }
         }
       }

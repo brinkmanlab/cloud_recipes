@@ -138,7 +138,6 @@ resource "kubernetes_deployment" "provisioner" {
           image_pull_policy = "IfNotPresent"
           args = [
             "--csi-address=/csi/csi.sock",
-            #"--provisioner=csi-cvmfsplugin",
             "--v=5",
             #"--timeout=60s",
             /*"--enable-leader-election=true",
@@ -158,7 +157,7 @@ resource "kubernetes_deployment" "provisioner" {
             "--nodeid=$(NODE_ID)",
             "--endpoint=unix://csi/csi.sock",
             "--v=5",
-            "--drivername=csi-cvmfsplugin",
+            "--drivername=${local.driver_name}",
             #"--metadatastorage=k8s_configmap",
             #"--mountcachedir=/mount-cache-dir",
           ]
@@ -179,8 +178,9 @@ resource "kubernetes_deployment" "provisioner" {
             name       = "cvmfs-keys"
           }
           volume_mount {
-            mount_path = "/etc/cvmfs"
+            mount_path = "/etc/cvmfs/default.local"
             name       = "cvmfs-config"
+            sub_path   = "default.local"
           }
         }
         node_selector = {
