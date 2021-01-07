@@ -14,6 +14,10 @@ Configure `kubectl` by running `aws eks --region us-west-2 update-kubeconfig --n
 Refer to the Kubernetes section for the remaining information.
 
 ## Azure
+TODO
+
+## Google Cloud
+TODO
 
 ## Kubernetes
 To check the state of the cluster run `kubectl describe node`.
@@ -27,10 +31,10 @@ The dashboard is included in all destinations by default.
 
 All cloud deployments include a dashboard server that provides administrative control of the cluster.
 To access it, [install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) and run `kubectl proxy` in a separate terminal.
-Visit [here](http://localhost:8001/api/v1/namespaces/kube-system/services/https:dashboard-chart-kubernetes-dashboard:https/proxy/#/login) to
+Visit [here](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login) to
 access the dashboard.
 
+### CVMFS CSI driver for Kubernetes
 
-
-### CVMFS CSI driver
-
+A CVMFS CSI driver is deployable using the `./util/k8s/cvmfs` terraform module. It outputs a storage class name to be used
+in a Kubernetes persistent volume claim definition.
