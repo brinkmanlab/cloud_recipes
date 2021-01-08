@@ -181,7 +181,7 @@ resource "kubernetes_daemonset" "plugin" {
           name = "registration-dir"
           host_path {
             path = "/var/lib/kubelet/plugins_registry/"
-            type = "Directory"
+            type = "DirectoryOrCreate"
           }
         }
         volume {
@@ -195,7 +195,7 @@ resource "kubernetes_daemonset" "plugin" {
           name = "plugin-dir"
           host_path {
             path = local.plugin_dir
-            type = "Directory"
+            type = "DirectoryOrCreate"
           }
         }
         volume {
