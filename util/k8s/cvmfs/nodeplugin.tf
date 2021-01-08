@@ -173,9 +173,6 @@ resource "kubernetes_daemonset" "plugin" {
             name       = "cvmfs-local-cache"
           }
         }
-        node_selector = {
-          WorkClass = "service"
-        }
         volume {
           name = "cvmfs-local-cache"
           empty_dir {}
