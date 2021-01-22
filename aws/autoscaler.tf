@@ -293,7 +293,7 @@ resource "kubernetes_role_binding" "autoscaler" {
 
 
 resource "kubernetes_deployment" "autoscaler" {
-  wait_for_rollout = ! var.debug
+  wait_for_rollout = !var.debug
   metadata {
     name      = "cluster-autoscaler"
     namespace = "kube-system"
@@ -352,11 +352,11 @@ resource "kubernetes_deployment" "autoscaler" {
           }
 
           resources {
-            limits {
+            limits = {
               cpu    = "100m"
               memory = "300Mi"
             }
-            requests {
+            requests = {
               cpu    = "100m"
               memory = "300Mi"
             }
