@@ -58,6 +58,7 @@ resource "kubernetes_cluster_role_binding" "nodeplugin" {
 }
 
 resource "kubernetes_daemonset" "plugin" {
+  depends_on = [kubernetes_cluster_role_binding.nodeplugin]
   metadata {
     name      = "csi-cvmfsplugin"
     namespace = local.namespace.metadata.0.name

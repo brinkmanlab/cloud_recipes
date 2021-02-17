@@ -74,7 +74,7 @@ resource "kubernetes_cluster_role_binding" "attacher" {
 }
 
 resource "kubernetes_deployment" "attacher" {
-
+  depends_on = [kubernetes_cluster_role_binding.attacher]
   metadata {
     generate_name = "csi-cvmfsplugin-attacher-"
     namespace     = local.namespace.metadata.0.name

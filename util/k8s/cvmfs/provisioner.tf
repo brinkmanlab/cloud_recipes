@@ -113,6 +113,7 @@ resource "kubernetes_role_binding" "provisioner" {
 }
 
 resource "kubernetes_deployment" "provisioner" {
+  depends_on = [kubernetes_cluster_role_binding.provisioner, kubernetes_role_binding.provisioner]
   metadata {
     generate_name = "csi-cvmfsplugin-provisioner-"
     namespace     = local.namespace.metadata.0.name
