@@ -46,7 +46,8 @@ module "eks" {
   map_roles                     = var.map_roles
   map_users                     = var.map_users
 
-  worker_groups = [
+  worker_groups_launch_template = [
+    # https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/spot-instances.md#using-launch-templates
     {
       name                 = "services"
       instance_type        = "t3.xlarge"
@@ -62,24 +63,7 @@ module "eks" {
       }, ])
       cpu_credits          = "unlimited"
       bootstrap_extra_args = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
-    }, /*{
-      name                 = "compute"
-      instance_type        = "c5.2xlarge"
-      asg_min_size         = 0
-      asg_max_size         = 30
-      asg_desired_capacity = 1
-      kubelet_extra_args   = "--node-labels=WorkClass=compute"
-      tags = concat(local.autoscaler_tag, [{
-        key                 = "WorkClass"
-        propagate_at_launch = "false"
-        value               = "compute"
-      }, ])
-      # spot_price           =
-    },*/
-  ]
-
-  worker_groups_launch_template = [
-    # https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/spot-instances.md#using-launch-templates
+    },
     {
       name                    = "compute"
       override_instance_types = local.instance_types
