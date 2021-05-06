@@ -56,13 +56,20 @@ variable "docker_registry_proxies" {
 }
 
 variable "map_accounts" {
-  description = "Additional AWS account numbers to add to the aws-auth configmap. See examples/basic/variables.tf for example format."
+  description = "Additional AWS account numbers to add to the aws-auth configmap. ex: \"777777777777\""
   type        = list(string)
   default     = []
 }
 
 variable "map_roles" {
-  description = "Additional IAM roles to add to the aws-auth configmap. See examples/basic/variables.tf for example format."
+  description = <<-EOT
+    Additional IAM roles to add to the aws-auth configmap. ex:
+    {
+      rolearn  = "arn:aws:iam::66666666666:role/role1"
+      username = "role1"
+      groups   = ["system:masters"]
+    }
+    EOT
   type = list(object({
     rolearn  = string
     username = string
@@ -72,7 +79,14 @@ variable "map_roles" {
 }
 
 variable "map_users" {
-  description = "Additional IAM users to add to the aws-auth configmap. See examples/basic/variables.tf for example format."
+  description = <<-EOT
+    Additional IAM users to add to the aws-auth configmap. ex:
+    {
+      userarn  = "arn:aws:iam::66666666666:user/user1"
+      username = "user1"
+      groups   = ["system:masters"]
+    }
+    EOT
   type = list(object({
     userarn  = string
     username = string
