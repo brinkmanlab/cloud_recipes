@@ -26,14 +26,10 @@ module "vpc" { # https://github.com/terraform-aws-modules/terraform-aws-vpc/
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
   }
 
-  #efs_endpoint_private_dns_enabled = true
-
-  enable_nat_gateway   = true
-  enable_vpn_gateway   = true
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  #enable_efs_endpoint = true
-  enable_s3_endpoint           = true
+  enable_nat_gateway           = true
+  enable_vpn_gateway           = true
+  enable_dns_hostnames         = true
+  enable_dns_support           = true
   create_database_subnet_group = true
 
   vpc_tags = {
