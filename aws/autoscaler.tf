@@ -353,8 +353,8 @@ resource "kubernetes_deployment" "autoscaler" {
 
           resources {
             limits = {
-              cpu    = "100m"
-              memory = "300Mi"
+              cpu    = "1.1"
+              memory = "2G"
             }
             requests = {
               cpu    = "100m"
