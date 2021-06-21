@@ -173,6 +173,11 @@ resource "kubernetes_daemonset" "plugin" {
             mount_path = local.CVMFS_CACHE_BASE
             name       = "cvmfs-local-cache"
           }
+
+          # TODO volume_mount {
+          #   mount_path = local.CVMFS_ALIEN_CACHE
+          #   name       = "cvmfs-alien-cache"
+          # }
         }
         volume {
           name = "cvmfs-local-cache"
