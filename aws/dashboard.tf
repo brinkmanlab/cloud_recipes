@@ -336,7 +336,7 @@ resource "kubernetes_deployment" "kube_dashboard_scraper" {
             run_as_group               = 2001
           }
         }
-        service_account_name            = "kubernetes-dashboard"
+        service_account_name            = kubernetes_service_account.kube_dashboard.metadata.0.name
         automount_service_account_token = true
         node_selector = {
           "kubernetes.io/os" = "linux"
