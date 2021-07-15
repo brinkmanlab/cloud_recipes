@@ -28,7 +28,7 @@ variable "cvmfs_keys" {
   description = "CVMFS Repository public keys keyed on repo name"
 }
 
-variable "cvmfs_repo_tag" {
+variable "cvmfs_repo_tags" {
   type        = map(string)
   default     = {}
   description = "CVMFS Repository commit tag to mount, keyed on repo name. Defaults to 'trunk'."
