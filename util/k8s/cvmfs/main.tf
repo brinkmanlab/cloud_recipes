@@ -64,7 +64,7 @@ resource "kubernetes_storage_class" "repos" {
   metadata {
     name = "cvmfs-${each.key}"
   }
-  parameters = {
+  parameters = merge({
     repository = each.value
-  }
+  }, try({ tag = var.cvmfs_repo_tag[each.key] }, {}))
 }
