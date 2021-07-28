@@ -32,6 +32,7 @@ resource "kubernetes_config_map" "config" {
       # For clarification, this is referencing whether repositories
       # should share a cache directory or each have their own
       CVMFS_SHARED_CACHE=no
+      CVMFS_CHECK_PERMISSIONS=no
     EOF
   }
 }
