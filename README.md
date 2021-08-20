@@ -11,6 +11,8 @@ Run `aws-iam-authenticator token -i <cluster name> --token-only` to get the requ
 
 Configure `kubectl` by running `aws eks --region us-west-2 update-kubeconfig --name <cluster name>`.
 
+Services accessible via `kubectl proxy` can be listed by running `kubectl cluster-info`.
+
 Refer to the Kubernetes section for the remaining information.
 
 ## Azure
