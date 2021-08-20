@@ -24,7 +24,8 @@ resource "kubernetes_service" "kube_dashboard" {
     name      = "kubernetes-dashboard"
     namespace = kubernetes_namespace.kube_dashboard.metadata.0.name
     labels = {
-      "k8s-app" = "kubernetes-dashboard"
+      "k8s-app"                       = "kubernetes-dashboard"
+      "kubernetes.io/cluster-service" = true
     }
   }
   spec {
