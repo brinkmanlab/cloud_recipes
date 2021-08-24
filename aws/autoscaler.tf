@@ -358,7 +358,7 @@ resource "kubernetes_deployment" "autoscaler" {
             }
             requests = {
               cpu    = "100m"
-              memory = "300Mi"
+              memory = "600Mi"
             }
           }
           volume_mount {
