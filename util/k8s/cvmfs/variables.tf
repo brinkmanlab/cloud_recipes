@@ -34,7 +34,14 @@ variable "cvmfs_repo_tags" {
   description = "CVMFS Repository commit tag to mount, keyed on repo name. Defaults to 'trunk'."
 }
 
+variable "stratum0s" {
+  type        = set(string)
+  default     = []
+  description = "Set of stratum-0 servers to fetch stratum-1 server lists from for CVMFS_SERVER_URL"
+}
+
 variable "servers" {
   type        = set(string)
+  default     = []
   description = "Set of servers as provided to CVMFS_SERVER_URL"
 }

@@ -1,10 +1,21 @@
 locals {
-  namespace         = var.namespace != null ? var.namespace : kubernetes_namespace.cvmfs[0]
-  CVMFS_KEYS_DIR    = "/etc/cvmfs/keys/"
-  CVMFS_CACHE_BASE  = "/mnt/cvmfs/localcache"
-  CVMFS_ALIEN_CACHE = "/mnt/cvmfs/aliencache"
-  plugin_dir        = "/var/lib/kubelet/plugins/${local.driver_name}"
-  driver_name       = "cvmfsDriver"
+  namespace           = var.namespace != null ? var.namespace : kubernetes_namespace.cvmfs[0]
+  CVMFS_KEYS_DIR      = "/etc/cvmfs/keys/"
+  CVMFS_CACHE_BASE    = "/mnt/cvmfs/localcache"
+  CVMFS_ALIEN_CACHE   = "/mnt/cvmfs/aliencache"
+  plugin_dir          = "/var/lib/kubelet/plugins/${local.driver_name}"
+  driver_name         = "cvmfsDriver"
+  recommended_servers = compact(flatten([for v in values(data.http.stratum0_info)[*].body : try(jsondecode(v)["recommended-stratum1s"], [])]))
+  servers             = toset(concat(tolist(var.servers), local.recommended_servers))
+}
+
+data "http" "stratum0_info" {
+  for_each = var.stratum0s
+  url      = "http://${each.value}/cvmfs/info/v1/meta.json"
+
+  request_headers = {
+    Accept = "application/json"
+  }
 }
 
 resource "kubernetes_namespace" "cvmfs" {
@@ -21,7 +32,7 @@ resource "kubernetes_config_map" "config" {
   }
   data = { #TODO set up s3fs to host alien cache
     "default.local" = <<-EOF
-      CVMFS_SERVER_URL="${join(";", var.servers)}"
+      CVMFS_SERVER_URL="${join(";", local.servers)}"
       CVMFS_KEYS_DIR="${local.CVMFS_KEYS_DIR}"
       CVMFS_USE_GEOAPI=yes
       CVMFS_HTTP_PROXY="DIRECT"
