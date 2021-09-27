@@ -8,6 +8,10 @@ The node-driver-registrar registers your CSI driver with Kubelet so that it know
 See https://github.com/kubernetes-csi/node-driver-registrar
 */
 
+locals {
+  liveness_probe = ["bash", "-c", "'! cvmfs_config probe | grep -v OK'"] # TODO factor out into variable when refactoring entire module into two, CSI and CVMFS
+}
+
 resource "kubernetes_service_account" "nodeplugin" {
   metadata {
     name      = "cvmfs-csi-nodeplugin"
@@ -136,6 +140,17 @@ resource "kubernetes_daemonset" "plugin" {
               field_ref {
                 field_path = "spec.nodeName"
               }
+            }
+          }
+          dynamic "liveness_probe" {
+            for_each = local.liveness_probe == null ? [] : [local.liveness_probe]
+            content {
+              exec {
+                command = liveness_probe.value
+              }
+              initial_delay_seconds = 30
+              period_seconds        = 30
+              timeout_seconds       = 60
             }
           }
           volume_mount {
