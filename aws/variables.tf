@@ -94,3 +94,9 @@ variable "map_users" {
   }))
   default = []
 }
+
+variable "max_worker_lifetime" {
+  type        = number
+  default     = 259200
+  description = "Maximum lifetime (in seconds) of compute nodes (minimum 86400)"
+}
