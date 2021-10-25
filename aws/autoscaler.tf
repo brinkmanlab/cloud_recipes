@@ -180,6 +180,8 @@ resource "kubernetes_cluster_role" "autoscaler" {
     resources = [
       "storageclasses",
       "csinodes",
+      "csidrivers",
+      "csistoragecapacities",
     ]
     verbs = [
       "watch",
