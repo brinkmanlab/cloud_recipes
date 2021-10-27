@@ -41,7 +41,7 @@ variable "metrics_server_version" {
 
 variable "autoscaler_version" {
   type    = string
-  default = "1.21.0" # https://console.cloud.google.com/gcr/images/google-containers/GLOBAL/cluster-autoscaler?gcrImageListsize=30
+  default = "1.21.1" # https://console.cloud.google.com/gcr/images/google-containers/GLOBAL/cluster-autoscaler?gcrImageListsize=30
 }
 
 variable "docker_registry_proxies" {
