@@ -117,7 +117,7 @@ resource "kubernetes_daemonset" "plugin" {
         }
         container {
           name              = "csi-cvmfsplugin"
-          image             = "cloudve/csi-cvmfsplugin:${var.cvmfs_csi_tag}"
+          image             = "${var.cvmfs_csi_driver}:${var.cvmfs_csi_tag}"
           image_pull_policy = "IfNotPresent"
           security_context {
             privileged = true

@@ -152,7 +152,7 @@ resource "kubernetes_deployment" "provisioner" {
         }
         container {
           name              = "csi-cvmfsplugin"
-          image             = "cloudve/csi-cvmfsplugin:${var.cvmfs_csi_tag}"
+          image             = "${var.cvmfs_csi_driver}:${var.cvmfs_csi_tag}"
           image_pull_policy = "IfNotPresent"
           args = [
             "--nodeid=$(NODE_ID)",

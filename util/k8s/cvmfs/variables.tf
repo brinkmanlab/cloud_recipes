@@ -13,14 +13,19 @@ variable "csi_provisioner_tag" {
   default = "v2.0.2"
 }
 
-variable "cvmfs_csi_tag" {
-  type    = string
-  default = "v1.0.1"
-}
-
 variable "csi_node_driver_tag" {
   type    = string
   default = "v2.0.1"
+}
+
+variable "cvmfs_csi_tag" {
+  type    = string
+  default = "9"
+}
+
+variable "cvmfs_csi_driver" {
+  type    = string
+  default = "fbarreir/csi-cvmfsplugin"
 }
 
 variable "cvmfs_keys" {
