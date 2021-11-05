@@ -4,7 +4,7 @@ locals {
   CVMFS_CACHE_BASE    = "/var/cache/cvmfs"
   CVMFS_ALIEN_CACHE   = "/mnt/cvmfs/aliencache"
   plugin_dir          = "/var/lib/kubelet/plugins/${local.driver_name}"
-  driver_name         = "cvmfsDriver"
+  driver_name         = "cvmfsdriver"
   recommended_servers = compact(flatten([for v in values(data.http.stratum0_info)[*].body : try(jsondecode(v)["recommended-stratum1s"], [])]))
   servers             = toset(concat(tolist(var.servers), local.recommended_servers))
 }
@@ -56,18 +56,16 @@ resource "kubernetes_config_map" "repo_keys" {
   data = { for repo, key in var.cvmfs_keys : "${repo}.pub" => key }
 }
 
-/* TODO after https://github.com/cernops/cvmfs-csi/issues/26, uncomment and try removing attacher?
-https://kubernetes-csi.github.io/docs/csi-driver-object.html
+// https://kubernetes-csi.github.io/docs/csi-driver-object.html
 resource "kubernetes_csi_driver" "driver" {
   metadata {
     name = local.driver_name
   }
   spec {
-    attach_required = false
+    attach_required   = false
     pod_info_on_mount = false
   }
 }
-*/
 
 resource "kubernetes_storage_class" "repos" {
   depends_on          = [kubernetes_daemonset.plugin, kubernetes_deployment.provisioner, kubernetes_deployment.attacher]
