@@ -70,7 +70,7 @@ resource "kubernetes_csi_driver" "driver" {
 }
 
 resource "kubernetes_storage_class" "repos" {
-  depends_on          = [kubernetes_daemonset.plugin, kubernetes_deployment.provisioner, kubernetes_deployment.attacher]
+  depends_on          = [kubernetes_daemonset.plugin, kubernetes_stateful_set.provisioner, kubernetes_deployment.attacher]
   for_each            = { for repo in keys(var.cvmfs_keys) : repo => repo }
   storage_provisioner = local.driver_name
   metadata {
