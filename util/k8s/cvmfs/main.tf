@@ -64,15 +64,17 @@ resource "kubernetes_csi_driver" "driver" {
     name = local.driver_name
   }
   spec {
-    attach_required   = false
-    pod_info_on_mount = false
+    attach_required        = false
+    pod_info_on_mount      = false
+    volume_lifecycle_modes = ["Persistent"]
   }
 }
 
 resource "kubernetes_storage_class" "repos" {
-  depends_on          = [kubernetes_daemonset.plugin, kubernetes_stateful_set.provisioner, kubernetes_deployment.attacher]
-  for_each            = { for repo in keys(var.cvmfs_keys) : repo => repo }
-  storage_provisioner = local.driver_name
+  depends_on             = [kubernetes_daemonset.plugin, kubernetes_stateful_set.provisioner, kubernetes_deployment.attacher]
+  for_each               = { for repo in keys(var.cvmfs_keys) : repo => repo }
+  storage_provisioner    = local.driver_name
+  allow_volume_expansion = false
   metadata {
     name = "cvmfs-${each.key}"
   }
