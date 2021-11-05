@@ -18,8 +18,13 @@ and attaches/detaches volumes to/from nodes (i.e. calls ControllerPublish/Contro
 
 See https://github.com/kubernetes-csi/external-attacher
 */
+locals {
+  attacher_count = kubernetes_csi_driver.driver.spec.0.attach_required ? 1 : 0
+}
+
 
 resource "kubernetes_service_account" "attacher" {
+  count = local.attacher_count
   metadata {
     name      = "cvmfs-attacher"
     namespace = local.namespace.metadata.0.name
@@ -27,6 +32,7 @@ resource "kubernetes_service_account" "attacher" {
 }
 
 resource "kubernetes_cluster_role" "attacher" {
+  count = local.attacher_count
   metadata {
     name = "cvmfs-external-attacher-runner"
   }
@@ -58,6 +64,7 @@ resource "kubernetes_cluster_role" "attacher" {
 }
 
 resource "kubernetes_cluster_role_binding" "attacher" {
+  count = local.attacher_count
   metadata {
     name = "cvmfs-attacher-role"
   }
@@ -74,6 +81,7 @@ resource "kubernetes_cluster_role_binding" "attacher" {
 }
 
 resource "kubernetes_deployment" "attacher" {
+  count      = local.attacher_count
   depends_on = [kubernetes_cluster_role_binding.attacher]
   metadata {
     generate_name = "csi-cvmfsplugin-attacher-"
