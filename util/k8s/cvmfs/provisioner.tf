@@ -140,11 +140,15 @@ resource "kubernetes_deployment" "provisioner" {
           args = [
             "--csi-address=/csi/csi.sock",
             "--v=5",
-            #"--timeout=60s",
-            /*"--enable-leader-election=true",
-            "--leader-election-type=leases",
-            "--retry-interval-start=500ms",*/
+            "--http-endpoint=:8080",
           ]
+          liveness_probe {
+            http_get {
+              scheme = "http"
+              path   = "/healthz"
+              port   = 8080
+            }
+          }
           volume_mount {
             mount_path = "/csi"
             name       = "socket-dir"
@@ -159,8 +163,6 @@ resource "kubernetes_deployment" "provisioner" {
             "--endpoint=unix://csi/csi.sock",
             "--v=5",
             "--drivername=${local.driver_name}",
-            #"--metadatastorage=k8s_configmap",
-            #"--mountcachedir=/mount-cache-dir",
           ]
           env {
             name = "NODE_ID"
