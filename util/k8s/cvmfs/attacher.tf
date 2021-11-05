@@ -70,12 +70,12 @@ resource "kubernetes_cluster_role_binding" "attacher" {
   }
   subject {
     kind      = "ServiceAccount"
-    name      = kubernetes_service_account.attacher.metadata.0.name
+    name      = kubernetes_service_account.attacher.0.metadata.0.name
     namespace = local.namespace.metadata.0.name
   }
   role_ref {
     kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.attacher.metadata.0.name
+    name      = kubernetes_cluster_role.attacher.0.metadata.0.name
     api_group = "rbac.authorization.k8s.io"
   }
 }
@@ -101,7 +101,7 @@ resource "kubernetes_deployment" "attacher" {
         }
       }
       spec {
-        service_account_name            = kubernetes_service_account.attacher.metadata.0.name
+        service_account_name            = kubernetes_service_account.attacher.0.metadata.0.name
         automount_service_account_token = true
         container {
           name              = "csi-attacher"
