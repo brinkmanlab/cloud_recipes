@@ -137,7 +137,7 @@ resource "kubernetes_stateful_set" "provisioner" {
   }
   spec {
     replicas               = 1
-    revision_history_limit = 0
+    revision_history_limit = 1
     service_name           = kubernetes_service.provisioner.metadata.0.name
     selector {
       match_labels = {
