@@ -112,13 +112,33 @@ resource "kubernetes_role_binding" "provisioner" {
   }
 }
 
-resource "kubernetes_deployment" "provisioner" {
+resource "kubernetes_service" "provisioner" {
+  metadata {
+    generate_name = "csi-cvmfsplugin-provisioner-"
+    namespace     = local.namespace.metadata.0.name
+  }
+  spec {
+    selector = {
+      App = "csi-cvmfsplugin-provisioner"
+    }
+    port {
+      port = 8080
+    }
+    cluster_ip = "None"
+    type       = "ClusterIP"
+  }
+}
+
+resource "kubernetes_stateful_set" "provisioner" {
   depends_on = [kubernetes_cluster_role_binding.provisioner, kubernetes_role_binding.provisioner]
   metadata {
     generate_name = "csi-cvmfsplugin-provisioner-"
     namespace     = local.namespace.metadata.0.name
   }
   spec {
+    replicas               = 1
+    revision_history_limit = 0
+    service_name           = kubernetes_service.provisioner.metadata.0.name
     selector {
       match_labels = {
         App = "csi-cvmfsplugin-provisioner"
