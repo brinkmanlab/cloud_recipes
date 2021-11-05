@@ -20,12 +20,12 @@ variable "csi_node_driver_tag" {
 
 variable "cvmfs_csi_tag" {
   type    = string
-  default = "9"
+  default = "1.2.0"
 }
 
 variable "cvmfs_csi_driver" {
   type    = string
-  default = "fbarreir/csi-cvmfsplugin"
+  default = "brinkmanlab/csi-cvmfsplugin"
 }
 
 variable "cvmfs_keys" {
