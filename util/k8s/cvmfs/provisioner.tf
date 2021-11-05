@@ -155,7 +155,7 @@ resource "kubernetes_stateful_set" "provisioner" {
         automount_service_account_token = true
         container {
           name              = "csi-provisioner"
-          image             = "quay.io/k8scsi/csi-provisioner:${var.csi_provisioner_tag}"
+          image             = "quay.io/k8scsi/csi-provisioner:${var.csi_provisioner_tag}" # TODO switch to https://github.com/kubernetes-csi/external-provisioner/releases
           image_pull_policy = "IfNotPresent"
           args = [
             "--csi-address=/csi/csi.sock",
