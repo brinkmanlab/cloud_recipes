@@ -72,13 +72,13 @@ resource "kubernetes_csi_driver" "driver" {
 
 resource "kubernetes_storage_class" "repos" {
   depends_on             = [kubernetes_daemonset.plugin, kubernetes_stateful_set.provisioner, kubernetes_deployment.attacher]
-  for_each               = { for repo in keys(var.cvmfs_keys) : repo => repo }
+  for_each               = var.cvmfs_repos
   storage_provisioner    = local.driver_name
   allow_volume_expansion = false
   metadata {
     name = "cvmfs-${each.key}"
   }
   parameters = merge({
-    repository = each.value
-  }, try({ tag = var.cvmfs_repo_tags[each.key] }, {}))
+    repository = each.value.repo
+  }, each.value.tag != "" ? { tag = each.value.tag } : {})
 }

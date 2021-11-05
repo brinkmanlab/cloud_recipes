@@ -33,10 +33,13 @@ variable "cvmfs_keys" {
   description = "CVMFS Repository public keys keyed on repo name"
 }
 
-variable "cvmfs_repo_tags" {
-  type        = map(string)
+variable "cvmfs_repos" {
+  type = map(object({
+    repo : string
+    tag : string
+  }))
   default     = {}
-  description = "CVMFS Repository commit tag to mount, keyed on repo name. Defaults to 'trunk'."
+  description = "CVMFS Repositories to mount. Tag defaults to 'trunk'."
 }
 
 variable "stratum0s" {
