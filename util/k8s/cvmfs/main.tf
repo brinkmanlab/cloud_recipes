@@ -7,6 +7,7 @@ locals {
   driver_name         = "cvmfsdriver"
   recommended_servers = compact(flatten([for v in values(data.http.stratum0_info)[*].body : try(jsondecode(v)["recommended-stratum1s"], [])]))
   servers             = toset(concat(tolist(var.servers), local.recommended_servers))
+  extra_config        = join("\n", [for k, v in var.extra_config : "${k}=${v}"])
 }
 
 data "http" "stratum0_info" {
@@ -44,6 +45,7 @@ resource "kubernetes_config_map" "config" {
       # should share a cache directory or each have their own
       CVMFS_SHARED_CACHE=no
       CVMFS_CHECK_PERMISSIONS=no
+      ${local.extra_config}
     EOF
   }
 }

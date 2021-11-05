@@ -50,3 +50,9 @@ variable "servers" {
   default     = []
   description = "Set of servers as provided to CVMFS_SERVER_URL"
 }
+
+variable "extra_config" {
+  type        = map(string)
+  default     = {}
+  description = "Extra CVMFS Key-values to include in default local"
+}
