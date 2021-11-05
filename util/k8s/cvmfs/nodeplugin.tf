@@ -90,7 +90,7 @@ resource "kubernetes_daemonset" "plugin" {
             "--v=5",
             "--csi-address=/csi/csi.sock",
             "--kubelet-registration-path=${local.plugin_dir}/csi.sock",
-            "--http-endpoint=:8080",
+            # "--http-endpoint=:8080",
           ]
           lifecycle {
             pre_stop {
@@ -107,13 +107,13 @@ resource "kubernetes_daemonset" "plugin" {
               }
             }
           }
-          liveness_probe {
-            http_get {
-              scheme = "HTTP"
-              path   = "/healthz"
-              port   = 8080
-            }
-          }
+          # liveness_probe {
+          #   http_get {
+          #     scheme = "HTTP"
+          #     path   = "/healthz"
+          #     port   = 8080
+          #   }
+          # }
           volume_mount {
             mount_path = "/csi"
             name       = "plugin-dir"

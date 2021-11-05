@@ -160,15 +160,15 @@ resource "kubernetes_stateful_set" "provisioner" {
           args = [
             "--csi-address=/csi/csi.sock",
             "--v=5",
-            "--http-endpoint=:8080",
+            # "--http-endpoint=:8080",
           ]
-          liveness_probe {
-            http_get {
-              scheme = "HTTP"
-              path   = "/healthz"
-              port   = 8080
-            }
-          }
+          # liveness_probe {
+          #   http_get {
+          #     scheme = "HTTP"
+          #     path   = "/healthz"
+          #     port   = 8080
+          #   }
+          # }
           volume_mount {
             mount_path = "/csi"
             name       = "socket-dir"
