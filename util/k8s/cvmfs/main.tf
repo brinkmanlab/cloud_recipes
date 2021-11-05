@@ -1,7 +1,7 @@
 locals {
   namespace           = var.namespace != null ? var.namespace : kubernetes_namespace.cvmfs[0]
   CVMFS_KEYS_DIR      = "/etc/cvmfs/keys/"
-  CVMFS_CACHE_BASE    = "/mnt/cvmfs/localcache"
+  CVMFS_CACHE_BASE    = "/var/cache/cvmfs"
   CVMFS_ALIEN_CACHE   = "/mnt/cvmfs/aliencache"
   plugin_dir          = "/var/lib/kubelet/plugins/${local.driver_name}"
   driver_name         = "cvmfsDriver"

@@ -131,8 +131,7 @@ resource "kubernetes_daemonset" "plugin" {
             "--endpoint=unix://csi/csi.sock",
             "--v=5",
             "--drivername=${local.driver_name}",
-            #"--metadatastorage=k8s_configmap",
-            #"--mountcachedir=/mount-cache-dir",
+            "--cvmfsCacheRoot=${local.CVMFS_CACHE_BASE}",
           ]
           env {
             name = "NODE_ID"
