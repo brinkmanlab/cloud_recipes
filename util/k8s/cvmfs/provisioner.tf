@@ -164,7 +164,7 @@ resource "kubernetes_stateful_set" "provisioner" {
           ]
           liveness_probe {
             http_get {
-              scheme = "http"
+              scheme = "HTTP"
               path   = "/healthz"
               port   = 8080
             }
