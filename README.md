@@ -13,6 +13,9 @@ Configure `kubectl` by running `aws eks --region us-west-2 update-kubeconfig --n
 
 Services accessible via `kubectl proxy` can be listed by running `kubectl cluster-info`.
 
+Updating the Kubernetes version does not update the managed add-ons deployed with it. 
+See [kube-proxy](https://docs.aws.amazon.com/eks/latest/userguide/managing-kube-proxy.html#updating-kube-proxy-add-on) and [aws-node](https://github.com/aws/amazon-vpc-cni-k8s/releases) daemonset upgrade information. 
+
 Refer to the Kubernetes section for the remaining information.
 
 ## Azure
