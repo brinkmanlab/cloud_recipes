@@ -55,6 +55,12 @@ variable "docker_registry_proxies" {
   description = "Docker registries to proxy"
 }
 
+variable "docker_registry_version" {
+  type        = string
+  default     = "0.9.1"
+  description = "Image tag of docker registry"
+}
+
 variable "map_accounts" {
   description = "Additional AWS account numbers to add to the aws-auth configmap. ex: \"777777777777\""
   type        = list(string)
