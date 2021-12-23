@@ -110,7 +110,7 @@ resource "kubernetes_secret" "docker_cache" {
   }
   data = {
     # TODO https://docs.docker.com/registry/configuration/#prometheus
-    "config.yml" = <<-EOF
+    "config.yml"       = <<-EOF
       version: 0.1
       log:
         fields:
@@ -131,6 +131,98 @@ resource "kubernetes_secret" "docker_cache" {
           interval: 10s
           threshold: 3
     EOF
+    "config.0.9.1.yml" = <<-EOF
+      # All other flavors inherit the `common' config snippet
+      common: &common
+          issue: '"docker-registry server"'
+          # Default log level is info
+          loglevel: info
+          debug: false
+          # By default, the registry acts standalone (eg: doesn't query the index)
+          standalone: true
+          # The default endpoint to use (if NOT standalone) is index.docker.io
+          index_endpoint: _env:INDEX_ENDPOINT:https://index.docker.io
+          # Storage redirect is disabled
+          storage_redirect: _env:STORAGE_REDIRECT
+          # Token auth is enabled (if NOT standalone)
+          disable_token_auth: _env:DISABLE_TOKEN_AUTH
+          # No priv key
+          privileged_key: _env:PRIVILEGED_KEY
+          # No search backend
+          search_backend: _env:SEARCH_BACKEND
+          # SQLite search backend
+          sqlalchemy_index_database: _env:SQLALCHEMY_INDEX_DATABASE:sqlite:////tmp/docker-registry.db
+
+          # Mirroring is not enabled
+          mirroring:
+              source: _env:REGISTRY_PROXY_REMOTEURL
+              source_index: _env:MIRROR_SOURCE_INDEX # https://index.docker.io
+              tags_cache_ttl: _env:MIRROR_TAGS_CACHE_TTL:172800 # seconds
+
+          cache:
+              host: _env:CACHE_REDIS_HOST
+              port: _env:CACHE_REDIS_PORT
+              db: _env:CACHE_REDIS_DB:0
+              password: _env:CACHE_REDIS_PASSWORD
+
+          # Enabling LRU cache for small files
+          # This speeds up read/write on small files
+          # when using a remote storage backend (like S3).
+          cache_lru:
+              host: _env:CACHE_LRU_REDIS_HOST
+              port: _env:CACHE_LRU_REDIS_PORT
+              db: _env:CACHE_LRU_REDIS_DB:0
+              password: _env:CACHE_LRU_REDIS_PASSWORD
+
+          # Enabling these options makes the Registry send an email on each code Exception
+          email_exceptions:
+              smtp_host: _env:SMTP_HOST
+              smtp_port: _env:SMTP_PORT:25
+              smtp_login: _env:SMTP_LOGIN
+              smtp_password: _env:SMTP_PASSWORD
+              smtp_secure: _env:SMTP_SECURE:false
+              from_addr: _env:SMTP_FROM_ADDR:docker-registry@localdomain.local
+              to_addr: _env:SMTP_TO_ADDR:noise+dockerregistry@localdomain.local
+
+          # Enable bugsnag (set the API key)
+          bugsnag: _env:BUGSNAG
+
+          # CORS support is not enabled by default
+          cors:
+              origins: _env:CORS_ORIGINS
+              methods: _env:CORS_METHODS
+              headers: _env:CORS_HEADERS:[Content-Type]
+              expose_headers: _env:CORS_EXPOSE_HEADERS
+              supports_credentials: _env:CORS_SUPPORTS_CREDENTIALS
+              max_age: _env:CORS_MAX_AGE
+              send_wildcard: _env:CORS_SEND_WILDCARD
+              always_send: _env:CORS_ALWAYS_SEND
+              automatic_options: _env:CORS_AUTOMATIC_OPTIONS
+              vary_header: _env:CORS_VARY_HEADER
+              resources: _env:CORS_RESOURCES
+
+      local: &local
+          <<: *common
+          storage: local
+          storage_path: _env:STORAGE_PATH:/tmp/registry
+
+      s3: &s3
+          <<: *common
+          storage: s3
+          s3_region: _env:AWS_REGION
+          s3_bucket: _env:AWS_BUCKET
+          boto_bucket: _env:AWS_BUCKET
+          storage_path: _env:REGISTRY_STORAGE_S3_ROOTDIRECTORY
+          s3_encrypt: _env:AWS_ENCRYPT:true
+          s3_secure: _env:AWS_SECURE:true
+          s3_access_key: _env:AWS_KEY
+          s3_secret_key: _env:AWS_SECRET
+          s3_use_sigv4: _env:AWS_USE_SIGV4
+          boto_host: _env:AWS_HOST
+          boto_port: _env:AWS_PORT
+          boto_calling_format: _env:AWS_CALLING_FORMAT
+
+    EOF
   }
   type = "Opaque"
 }
@@ -146,7 +238,7 @@ resource "kubernetes_secret" "registry_passwords" {
 resource "kubernetes_deployment" "docker_cache" {
   for_each         = var.docker_registry_proxies
   depends_on       = [module.eks]
-  wait_for_rollout = ! var.debug
+  wait_for_rollout = !var.debug
   metadata {
     name      = "${local.docker_cache_name}-${each.key}"
     namespace = "kube-system"
@@ -180,7 +272,7 @@ resource "kubernetes_deployment" "docker_cache" {
         automount_service_account_token = true
         container {
           name  = "docker-cache"
-          image = "registry"
+          image = "registry:${var.docker_registry_version}"
 
           port {
             name           = "docker-cache"
@@ -210,6 +302,17 @@ resource "kubernetes_deployment" "docker_cache" {
                 key  = each.key
               }
             }
+          }
+
+          env {
+            # TODO v0.9.1 only
+            name  = "SETTINGS_FLAVOR"
+            value = "prod"
+          }
+          env {
+            # TODO v0.9.1 only
+            name  = "DOCKER_REGISTRY_CONFIG"
+            value = "/etc/docker/registry/config.yml"
           }
 
           #env { TODO?
