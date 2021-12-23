@@ -198,6 +198,11 @@ resource "kubernetes_deployment" "kube_dashboard" {
         }
       }
       spec {
+        #security_context { TODO
+        #  seccompProfile = {
+        #    type: RuntimeDefault
+        #  }
+        #}
         container {
           name              = "kubernetes-dashboard"
           image             = "kubernetesui/dashboard:v${var.dashboard_version}"
