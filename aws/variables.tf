@@ -26,12 +26,12 @@ variable "debug" {
 
 variable "dashboard_version" {
   type    = string
-  default = "2.0.0"
+  default = "2.4.0"
 }
 
 variable "metrics_scraper_version" {
   type    = string
-  default = "1.0.4"
+  default = "1.0.7"
 }
 
 variable "metrics_server_version" {
