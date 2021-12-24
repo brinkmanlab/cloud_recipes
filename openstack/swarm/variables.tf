@@ -56,10 +56,10 @@ variable "private_key" {
   description = "Private key contents of key_pair"
 }
 
-variable "key_cert" {
-  type        = string
-  description = "CA certificate used to sign private_key"
-}
+#variable "key_cert" {
+#  type        = string
+#  description = "CA certificate used to sign private_key"
+#}
 
 variable "vm_user" {
   type        = string
