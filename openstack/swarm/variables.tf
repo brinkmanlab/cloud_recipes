@@ -16,22 +16,16 @@ variable "manager_replicates" {
   description = "Number of manager replicates"
 }
 
-variable "worker_replicates" {
-  type        = number
-  default     = 2
-  description = "Number of manager replicates"
-}
-
 variable "manager_flavor" {
   type        = string
   default     = "c4-15gb-83"
   description = "Flavor of VM to allocate for redundant managers"
 }
 
-variable "worker_flavor" {
-  type        = string
-  default     = "c8-30gb-186"
-  description = "Flavor of VM to allocate for workers"
+variable "manager_size" {
+  type        = number
+  default     = 20
+  description = "Size in GB of manager disk"
 }
 
 variable "image_url" {
@@ -69,11 +63,49 @@ variable "vm_user" {
 variable "init-cmds" {
   type        = list(string)
   default     = []
-  description = "list of shell commands to run on each node during init"
+  description = "List of shell commands to run on each node during init (including all workers)"
 }
 
 variable "configs" {
-  type        = object({ path : string, content : string })
+  type        = map(string)
   default     = {}
-  description = "map of paths to content to write to node before init"
+  description = "Map of paths to content to write to node before init (including all workers)"
+}
+
+variable "docker_conf_master1" {
+  type        = map(any)
+  default     = {}
+  description = "Docker daemon configuration. https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file"
+}
+
+variable "docker_conf_masters" {
+  type        = map(any)
+  default     = {}
+  description = "Docker daemon configuration. https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file"
+}
+
+variable "master1_labels" {
+  type        = map(string)
+  default     = {}
+  description = "Node labels for master1"
+}
+
+variable "master_labels" {
+  type        = map(string)
+  default     = {}
+  description = "Node labels for masters"
+}
+
+variable "worker_flavors" {
+  type = map(object({
+    docker_conf = map(any)     # Map of daemon config options. See var.docker_conf_master1.
+    labels      = map(string)  # Map of node labels
+    size        = number       # Hard drive allocation size
+    configs     = map(string)  # Map of paths to content to write to node before init
+    count       = number       # Number of replicas
+    node_flavor = string       # Openstack VM flavor name
+    init-cmds   = list(string) # List of shell commands to run on each node during init
+  }))
+  default     = {}
+  description = "Docker daemon configuration. https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file"
 }

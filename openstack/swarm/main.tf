@@ -1,11 +1,14 @@
 locals {
-  manager_token = trimspace(sshcommand_command.manager_token.result)
-  worker_token  = trimspace(sshcommand_command.worker_token.result)
-  image_id      = var.image_name == null ? openstack_images_image_v2.engine[0].id : data.openstack_images_image_v2.engine[0].id
-  signal        = "/tmp/ready_signal"
-  cloud-init = join("\n", ["#cloud-config", yamlencode({
+  manager_token  = trimspace(sshcommand_command.manager_token.result)
+  worker_token   = trimspace(sshcommand_command.worker_token.result)
+  manager_prefix = "swarm_manager"
+  worker_prefix  = "swarm_worker_"
+  image_id       = var.image_name == null ? openstack_images_image_v2.engine[0].id : data.openstack_images_image_v2.engine[0].id
+  signal         = "/tmp/ready_signal"
+  cloud-init = { for n in concat(keys(local.workers), [for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}"]) : n => join("\n", ["#cloud-config", yamlencode({
     # https://cloudinit.readthedocs.io/en/latest/topics/examples.html#run-commands-on-first-boot
     runcmd : concat([
+      # TODO configure swap space
       "dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo",
       "dnf update -y",
       "yum install -y docker-ce docker-ce-cli containerd.io",
@@ -13,10 +16,11 @@ locals {
       "systemctl start docker",
       "groupadd docker",
       "usermod -aG docker ${var.vm_user}",
-      ], var.init-cmds, [
+      ], var.init-cmds, try(local.workers[n]["init-cmds"], []), [
       "touch ${local.signal}",
     ])
-  })])
+  })]) }
+  workers = merge([for n, v in var.worker_flavors : zipmap([for i in range(1, v.count + 1) : "${local.worker_prefix}${n}${i}"], [for i in range(v.count) : merge({ worker_flavor : n }, v)])]...)
 }
 
 data "openstack_images_image_v2" "engine" {
@@ -35,11 +39,11 @@ resource "openstack_images_image_v2" "engine" {
 }
 
 resource "openstack_compute_instance_v2" "manager1" {
-  name            = "swarm_manager1"
+  name            = "${local.manager_prefix}1"
   flavor_name     = var.manager1_flavor
   security_groups = concat(var.sec_groups, [openstack_networking_secgroup_v2.docker_engine.id])
   key_pair        = var.key_pair
-  user_data       = local.cloud-init
+  user_data       = local.cloud-init["${local.manager_prefix}1"]
 
   dynamic "personality" {
     for_each = var.configs
@@ -49,10 +53,20 @@ resource "openstack_compute_instance_v2" "manager1" {
     }
   }
 
+  personality {
+    content = jsonencode(merge(var.docker_conf_masters, {
+      label = [for k, v in merge({
+        node_flavor = var.manager_flavor
+        name        = "${local.manager_prefix}1"
+      }, lookup(var.docker_conf_master1, "label", {})) : "${k}=${v}"]
+    }))
+    file = "/etc/docker/daemon.json"
+  }
+
   block_device {
     uuid                  = local.image_id
     source_type           = "image"
-    volume_size           = 20
+    volume_size           = var.manager_size
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true
@@ -111,21 +125,39 @@ resource "openstack_compute_floatingip_associate_v2" "manager1" {
 
 resource "openstack_compute_instance_v2" "manager" {
   count           = var.manager_replicates
-  name            = "swarm_manager${count.index + 2}"
+  name            = "${local.manager_prefix}${count.index + 2}"
   flavor_name     = var.manager_flavor
   security_groups = concat(var.sec_groups, [openstack_networking_secgroup_v2.docker_engine.id])
   key_pair        = var.key_pair
-  user_data       = local.cloud-init
+  user_data       = local.cloud-init["${local.manager_prefix}${count.index + 2}"]
+
+  dynamic "personality" {
+    for_each = var.configs
+    content {
+      file    = personality.key
+      content = personality.value
+    }
+  }
 
   personality {
     file    = "/etc/cvmfs/default.local"
     content = file("${path.module}/default.local")
   }
 
+  personality {
+    content = jsonencode(merge(var.docker_conf_masters, {
+      label = [for k, v in merge({
+        node_flavor = var.manager_flavor
+        name        = "${local.manager_prefix}${count.index + 2}"
+      }, lookup(var.docker_conf_masters, "label", {})) : "${k}=${v}"]
+    }))
+    file = "/etc/docker/daemon.json"
+  }
+
   block_device {
     uuid                  = local.image_id
     source_type           = "image"
-    volume_size           = 20
+    volume_size           = var.manager_size
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true
@@ -140,6 +172,7 @@ resource "openstack_compute_instance_v2" "manager" {
     bastion_private_key = var.private_key
     bastion_user        = var.vm_user
   }
+
   provisioner "remote-exec" {
     inline = [
       "until [[ -f ${local.signal} ]]; do sleep 1; done",
@@ -149,22 +182,41 @@ resource "openstack_compute_instance_v2" "manager" {
 }
 
 resource "openstack_compute_instance_v2" "worker" {
-  count           = var.worker_replicates
-  name            = "swarm_worker${count.index + 1}"
-  flavor_name     = var.manager_flavor
+  for_each        = local.workers
+  name            = each.key
+  flavor_name     = coalesce(each.value.flavor_name, var.manager_flavor)
   security_groups = concat(var.sec_groups, [openstack_networking_secgroup_v2.docker_engine.id])
   key_pair        = var.key_pair
-  user_data       = local.cloud-init
+  user_data       = local.cloud-init[each.key]
+
+  dynamic "personality" {
+    for_each = merge(var.configs, each.value.configs)
+    content {
+      file    = personality.key
+      content = personality.value
+    }
+  }
 
   personality {
     file    = "/etc/cvmfs/default.local"
     content = file("${path.module}/default.local")
   }
 
+  personality {
+    content = jsonencode(merge(each.value.docker_conf, {
+      label = [for k, v in merge({
+        node_flavor   = coalesce(each.value.node_flavor, var.manager_flavor)
+        name          = each.key
+        worker_flavor = each.value.worker_flavor
+      }, each.value.labels) : "${k}=${v}"]
+    }))
+    file = "/etc/docker/daemon.json"
+  }
+
   block_device {
     uuid                  = local.image_id
     source_type           = "image"
-    volume_size           = 20
+    volume_size           = coalesce(each.value.size, 20) # TODO mount performant disk to docker volume root
     boot_index            = 0
     destination_type      = "volume"
     delete_on_termination = true
@@ -178,6 +230,7 @@ resource "openstack_compute_instance_v2" "worker" {
     bastion_private_key = var.private_key
     bastion_user        = var.vm_user
   }
+
   provisioner "remote-exec" {
     inline = [
       "until [[ -f ${local.signal} ]]; do sleep 1; done",
