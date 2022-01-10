@@ -4,6 +4,12 @@ variable "sec_groups" {
   description = "List of security group ids to attach to engine nodes"
 }
 
+variable "public_network" {
+  type        = string
+  default     = "Public-Network"
+  description = "Name of public network to register manager1 fip"
+}
+
 variable "manager1_flavor" {
   type        = string
   default     = "p8-12gb"
@@ -14,6 +20,12 @@ variable "manager_replicates" {
   type        = number
   default     = 2
   description = "Number of manager replicates"
+}
+
+variable "manager_fips" {
+  type        = number
+  default     = 2
+  description = "Number of fips to bind to managers, not including manager1"
 }
 
 variable "manager_flavor" {
