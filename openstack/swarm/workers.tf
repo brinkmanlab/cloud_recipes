@@ -35,7 +35,7 @@ resource "openstack_compute_instance_v2" "worker" {
     source_type           = "image"
     volume_size           = coalesce(each.value.size, 20) # TODO mount performant disk to docker volume root
     boot_index            = 0
-    destination_type      = "volume"
+    destination_type      = "local"
     delete_on_termination = true
   }
 

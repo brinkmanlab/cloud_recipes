@@ -28,7 +28,7 @@ resource "openstack_compute_instance_v2" "manager1" {
     source_type           = "image"
     volume_size           = 20
     boot_index            = 0
-    destination_type      = "volume"
+    destination_type      = "local"
     delete_on_termination = true
   }
 
