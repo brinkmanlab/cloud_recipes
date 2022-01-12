@@ -5,6 +5,7 @@ resource "openstack_compute_instance_v2" "worker" {
   security_groups = concat(var.sec_groups, [openstack_networking_secgroup_v2.docker_engine.id])
   key_pair        = var.key_pair
   user_data       = local.cloud-init[each.key]
+  image_id        = local.image_id
 
   dynamic "personality" {
     for_each = merge(var.configs, each.value.configs)
