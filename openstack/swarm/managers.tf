@@ -74,7 +74,7 @@ resource "openstack_compute_instance_v2" "manager" {
 
 resource "openstack_networking_floatingip_v2" "manager" {
   for_each    = local.fip_assignments
-  description = "${local.manager_prefix}${count.index}"
+  description = each.key
   pool        = var.public_network
 }
 
