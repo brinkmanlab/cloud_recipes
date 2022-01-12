@@ -16,6 +16,12 @@ variable "manager1_flavor" {
   description = "Flavor of VM to allocate for manager1. Should be a persistent node."
 }
 
+variable "manager1_local_storage" {
+  type        = bool
+  default     = false
+  description = ""
+}
+
 variable "manager_replicates" {
   type        = number
   default     = 2

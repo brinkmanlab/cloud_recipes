@@ -29,25 +29,27 @@ resource "openstack_compute_instance_v2" "manager1" {
     source_type           = "image"
     volume_size           = 20
     boot_index            = 0
-    destination_type      = "local"
+    destination_type      = var.manager1_local_storage ? "local" : "volume"
     delete_on_termination = true
+  }
+
+  dynamic "block_device" {
+    for_each = range(var.manager1_local_storage ? 1 : 0)
+    content {
+      boot_index            = -1
+      delete_on_termination = true
+      destination_type      = "local"
+      source_type           = "blank"
+      guest_format          = "swap"
+      volume_size           = 64
+    }
   }
 
   # TODO mount fast drive to /var/lib/docker for docker data
-
   block_device {
     boot_index            = -1
     delete_on_termination = true
-    destination_type      = "local"
-    source_type           = "blank"
-    guest_format          = "swap"
-    volume_size           = 64
-  }
-
-  block_device {
-    boot_index            = -1
-    delete_on_termination = true
-    destination_type      = "local"
+    destination_type      = var.manager1_local_storage ? "local" : "volume"
     source_type           = "blank"
     volume_size           = var.manager_size
     guest_format          = "ext4"
