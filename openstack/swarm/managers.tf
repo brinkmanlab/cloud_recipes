@@ -78,7 +78,7 @@ resource "openstack_networking_floatingip_v2" "manager" {
   pool        = var.public_network
 }
 
-resource "openstack_compute_floatingip_associate_v2" "manager1" {
+resource "openstack_compute_floatingip_associate_v2" "manager" {
   for_each    = local.fip_assignments
   floating_ip = openstack_networking_floatingip_v2.manager[each.key].address
   instance_id = openstack_compute_instance_v2.manager[each.key].id
