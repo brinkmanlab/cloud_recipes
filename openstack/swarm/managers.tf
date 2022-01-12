@@ -69,12 +69,12 @@ resource "openstack_compute_instance_v2" "manager" {
 
 resource "openstack_networking_floatingip_v2" "manager" {
   count       = local.fip_assignments
-  description = "manager${count.index}"
+  description = "${local.manager_prefix}${count.index + 2}"
   pool        = var.public_network
 }
 
 resource "openstack_compute_floatingip_associate_v2" "manager" {
   count       = local.fip_assignments
-  floating_ip = openstack_networking_floatingip_v2.manager["manager${count.index}"].address
-  instance_id = openstack_compute_instance_v2.manager["manager${count.index}"].id
+  floating_ip = openstack_networking_floatingip_v2.manager[count.index].address
+  instance_id = openstack_compute_instance_v2.manager[count.index].id
 }
