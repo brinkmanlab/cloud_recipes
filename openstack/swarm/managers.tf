@@ -1,5 +1,5 @@
 locals {
-  fip_assignments = slice(keys(openstack_compute_instance_v2.manager), 0, min(var.manager_fips, length(openstack_compute_instance_v2.manager)))
+  fip_assignments = min(var.manager_fips, var.manager_replicates)
 }
 
 resource "openstack_compute_servergroup_v2" "managers" {
@@ -68,13 +68,13 @@ resource "openstack_compute_instance_v2" "manager" {
 }
 
 resource "openstack_networking_floatingip_v2" "manager" {
-  for_each    = local.fip_assignments
-  description = each.key
+  count       = local.fip_assignments
+  description = "manager${count.index}"
   pool        = var.public_network
 }
 
 resource "openstack_compute_floatingip_associate_v2" "manager" {
-  for_each    = local.fip_assignments
-  floating_ip = openstack_networking_floatingip_v2.manager[each.key].address
-  instance_id = openstack_compute_instance_v2.manager[each.key].id
+  count       = local.fip_assignments
+  floating_ip = openstack_networking_floatingip_v2.manager["manager${count.index}"].address
+  instance_id = openstack_compute_instance_v2.manager["manager${count.index}"].id
 }
