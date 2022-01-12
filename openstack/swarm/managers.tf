@@ -33,7 +33,8 @@ resource "openstack_compute_instance_v2" "manager" {
       label = [for k, v in merge({
         node_flavor = var.manager_flavor
         name        = "${local.manager_prefix}${count.index + 2}"
-      }, lookup(var.docker_conf_masters, "label", {})) : "${k}=${v}"]
+        ingress     = count.index < var.manager_fips
+      }, lookup(var.docker_conf_masters, "label", {}), try({ fip = openstack_networking_floatingip_v2.manager["${local.manager_prefix}${count.index + 2}"] }, {})) : "${k}=${v}"]
     }))
     file = "/etc/docker/daemon.json"
   }
