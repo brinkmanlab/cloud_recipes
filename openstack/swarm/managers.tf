@@ -14,6 +14,7 @@ resource "openstack_compute_instance_v2" "manager" {
   security_groups = concat(var.sec_groups, [openstack_networking_secgroup_v2.docker_engine.id])
   key_pair        = var.key_pair
   user_data       = local.cloud-init["${local.manager_prefix}${count.index + 2}"]
+  image_id        = local.image_id
 
   dynamic "personality" {
     for_each = var.configs
@@ -37,13 +38,36 @@ resource "openstack_compute_instance_v2" "manager" {
   block_device {
     uuid                  = local.image_id
     source_type           = "image"
-    volume_size           = var.manager_size
+    volume_size           = 20
     boot_index            = 0
     destination_type      = "local"
     delete_on_termination = true
   }
 
+  dynamic "block_device" {
+    for_each = range(var.manager_local_storage && var.manager_swap_size > 0 ? 1 : 0)
+    content {
+      boot_index            = -1
+      delete_on_termination = true
+      destination_type      = "local"
+      source_type           = "blank"
+      guest_format          = "swap"
+      volume_size           = var.manager_swap_size
+    }
+  }
+
   # TODO mount fast drive to /var/lib/docker for docker data
+  dynamic "block_device" {
+    for_each = range(var.manager_local_storage ? 1 : 0)
+    content {
+      boot_index            = -1
+      delete_on_termination = true
+      destination_type      = "local"
+      source_type           = "blank"
+      volume_size           = var.manager_size
+      guest_format          = "ext4"
+    }
+  }
 
   scheduler_hints {
     group = openstack_compute_servergroup_v2.managers.id

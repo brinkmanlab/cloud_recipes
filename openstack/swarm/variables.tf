@@ -19,7 +19,7 @@ variable "manager1_flavor" {
 variable "manager1_local_storage" {
   type        = bool
   default     = false
-  description = ""
+  description = "Is local storage available for the specified flavor"
 }
 
 variable "manager_replicates" {
@@ -40,10 +40,22 @@ variable "manager_flavor" {
   description = "Flavor of VM to allocate for redundant managers"
 }
 
+variable "manager_local_storage" {
+  type        = bool
+  default     = false
+  description = "Is local storage available for the specified flavor"
+}
+
 variable "manager_size" {
   type        = number
   default     = 20
   description = "Size in GB of manager disk"
+}
+
+variable "manager_swap_size" {
+  type        = number
+  default     = 0
+  description = "Swap space to allocate on manager nodes"
 }
 
 variable "image_url" {

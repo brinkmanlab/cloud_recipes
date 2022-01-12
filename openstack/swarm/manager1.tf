@@ -34,14 +34,14 @@ resource "openstack_compute_instance_v2" "manager1" {
   }
 
   dynamic "block_device" {
-    for_each = range(var.manager1_local_storage ? 1 : 0)
+    for_each = range(var.manager1_local_storage && var.manager_swap_size > 0 ? 1 : 0)
     content {
       boot_index            = -1
       delete_on_termination = true
       destination_type      = "local"
       source_type           = "blank"
       guest_format          = "swap"
-      volume_size           = 64
+      volume_size           = var.manager_swap_size
     }
   }
 
