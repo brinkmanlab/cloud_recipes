@@ -58,7 +58,7 @@ resource "openstack_compute_instance_v2" "manager" {
 
   # TODO mount fast drive to /var/lib/docker for docker data
   dynamic "block_device" {
-    for_each = range(var.manager_local_storage ? 1 : 0)
+    for_each = range(var.manager_local_storage && var.manager_size > 0 ? 1 : 0)
     content {
       boot_index            = -1
       delete_on_termination = true
@@ -78,9 +78,7 @@ resource "openstack_compute_instance_v2" "manager" {
     user        = var.vm_user
     private_key = var.private_key
     #certificate = var.key_cert
-    bastion_host        = openstack_networking_floatingip_v2.manager1.address
-    bastion_private_key = var.private_key
-    bastion_user        = var.vm_user
+    bastion_host = openstack_networking_floatingip_v2.manager1.address
   }
 
   provisioner "remote-exec" {
