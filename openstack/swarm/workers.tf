@@ -16,11 +16,6 @@ resource "openstack_compute_instance_v2" "worker" {
   }
 
   personality {
-    file    = "/etc/cvmfs/default.local"
-    content = file("${path.module}/default.local")
-  }
-
-  personality {
     content = jsonencode(merge(each.value.docker_conf, {
       label = [for k, v in merge({
         node_flavor   = coalesce(each.value.node_flavor, var.manager_flavor)
