@@ -72,7 +72,7 @@ resource "openstack_compute_instance_v2" "manager1" {
 
 resource "sshcommand_command" "init_manager" {
   host                  = openstack_compute_floatingip_associate_v2.manager1.floating_ip
-  command               = "until [[ -f ${local.signal} ]]; do sleep 1; done; sudo docker swarm init --advertise-addr ${openstack_compute_instance_v2.manager1.access_ip_v4}"
+  command               = "until [[ -f ${local.signal} ]]; do sleep 1; done; sudo docker swarm init --advertise-addr ${openstack_compute_instance_v2.manager1.access_ip_v4} #${openstack_compute_instance_v2.manager1.id}"
   private_key           = var.private_key
   user                  = var.vm_user
   retry                 = true
