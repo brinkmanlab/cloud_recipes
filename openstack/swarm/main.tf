@@ -8,8 +8,9 @@ locals {
   cloud-init = { for n in concat(keys(local.workers), [for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}"]) : n => join("\n", ["#cloud-config", yamlencode({
     # https://cloudinit.readthedocs.io/en/latest/topics/examples.html#run-commands-on-first-boot
     runcmd : concat([
-      #"cat '/dev/docker1 /var/lib/docker ext4 defaults 0 0' >> /etc/fstab",
-      #"systemctl daemon-reload",
+      #TODO this needs work to skip/init swap
+      "lsblk -ndpo NAME | while read path; do if [[ -e $${path}1 ]]; then parted -a optimal $${path} mkpart primary 0% 100% && cat '$${path} /var/lib/docker ext4 defaults 0 0' >> /etc/fstab; fi; done",
+      "systemctl daemon-reload",
       "dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo",
       "dnf update -y",
       "yum install -y docker-ce docker-ce-cli containerd.io",
