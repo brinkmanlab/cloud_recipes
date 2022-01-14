@@ -29,13 +29,43 @@ resource "openstack_compute_instance_v2" "worker" {
   block_device {
     uuid                  = local.image_id
     source_type           = "image"
-    volume_size           = coalesce(each.value.size, 20) # TODO mount performant disk to docker volume root
+    volume_size           = 20
     boot_index            = 0
-    destination_type      = "local"
+    destination_type      = each.value.local_storage ? "local" : "volume"
     delete_on_termination = true
   }
 
+  dynamic "block_device" {
+    for_each = range(each.value.local_storage && coalesce(each.value.swap_size, 0) > 0 ? 1 : 0)
+    content {
+      boot_index            = -1
+      delete_on_termination = true
+      destination_type      = "local"
+      source_type           = "blank"
+      guest_format          = "swap"
+      volume_size           = var.manager_swap_size
+    }
+  }
+
   # TODO mount fast drive to /var/lib/docker for docker data
+  dynamic "block_device" {
+    for_each = range(each.value.local_storage && each.value.size > 0 ? 1 : 0)
+    content {
+      boot_index            = -1
+      delete_on_termination = true
+      destination_type      = "local"
+      source_type           = "blank"
+      volume_size           = each.value.size
+      guest_format          = "ext4"
+    }
+  }
+
+  dynamic "network" {
+    for_each = coalesce(each.value.networks, [var.private_network])
+    content {
+      name = network.value
+    }
+  }
 
   connection {
     host                = self.access_ip_v4
