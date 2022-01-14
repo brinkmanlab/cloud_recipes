@@ -9,7 +9,7 @@ locals {
     # https://cloudinit.readthedocs.io/en/latest/topics/examples.html#run-commands-on-first-boot
     runcmd : concat([
       #TODO this needs work to skip/init swap
-      "lsblk -ndpo NAME | while read path; do if [[ ! -e $${path}1 ]]; then parted -a optimal $${path} mklabel gpt mkpart primary 0% 100% && mkfs.ext4 $${path}1 && echo \"$${path} /var/lib/docker ext4 defaults 0 0\" >> /etc/fstab; fi; done",
+      "lsblk -ndpo NAME | while read path; do if [[ ! -e $${path}1 ]]; then parted -a optimal $${path} mklabel gpt mkpart primary 0% 100% && mkfs.ext4 $${path}1 && echo \"$${path}1 /var/lib/docker ext4 defaults 0 0\" >> /etc/fstab; fi; done",
       "mount -a",
       "systemctl daemon-reload",
       "dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo",
