@@ -10,9 +10,13 @@ variable "public_network" {
   description = "Name of public network to register manager1 fip"
 }
 
+variable "private_network" {
+  type        = string
+  description = "Name of private network to register nodes on"
+}
+
 variable "manager1_flavor" {
   type        = string
-  default     = "p8-12gb"
   description = "Flavor of VM to allocate for manager1. Should be a persistent node."
 }
 
@@ -36,7 +40,6 @@ variable "manager_fips" {
 
 variable "manager_flavor" {
   type        = string
-  default     = "c4-15gb-83"
   description = "Flavor of VM to allocate for redundant managers"
 }
 
@@ -128,13 +131,16 @@ variable "master_labels" {
 
 variable "worker_flavors" {
   type = map(object({
-    docker_conf = map(any)     # Map of daemon config options. See var.docker_conf_master1.
-    labels      = map(string)  # Map of node labels
-    size        = number       # Hard drive allocation size
-    configs     = map(string)  # Map of paths to content to write to node before init
-    count       = number       # Number of replicas
-    node_flavor = string       # Openstack VM flavor name
-    init-cmds   = list(string) # List of shell commands to run on each node during init
+    docker_conf   = map(any)     # Map of daemon config options. See var.docker_conf_master1.
+    labels        = map(string)  # Map of node labels
+    size          = number       # Hard drive allocation size
+    configs       = map(string)  # Map of paths to content to write to node before init
+    count         = number       # Number of replicas
+    node_flavor   = string       # Openstack VM flavor name
+    init-cmds     = list(string) # List of shell commands to run on each node during init
+    local_storage = bool         # flavor supports local storage
+    swap_size     = number       # Size of swap disk to allocate
+    networks      = list(string) # List of networks to attach to node
   }))
   default     = {}
   description = "Docker daemon configuration. https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file"

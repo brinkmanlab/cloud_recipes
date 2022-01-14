@@ -11,7 +11,7 @@ resource "openstack_compute_instance_v2" "manager" {
   count           = var.manager_replicates
   name            = "${local.manager_prefix}${count.index + 2}"
   flavor_name     = var.manager_flavor
-  security_groups = concat(var.sec_groups, [openstack_networking_secgroup_v2.docker_engine.id])
+  security_groups = concat(var.sec_groups, [openstack_networking_secgroup_v2.docker_engine.name])
   key_pair        = var.key_pair
   user_data       = local.cloud-init["${local.manager_prefix}${count.index + 2}"]
   image_id        = local.image_id
@@ -71,6 +71,10 @@ resource "openstack_compute_instance_v2" "manager" {
 
   scheduler_hints {
     group = openstack_compute_servergroup_v2.managers.id
+  }
+
+  network {
+    name = var.private_network
   }
 
   connection {

@@ -1,10 +1,11 @@
 resource "openstack_compute_instance_v2" "manager1" {
   name            = "${local.manager_prefix}1"
   flavor_name     = var.manager1_flavor
-  security_groups = concat(var.sec_groups, [openstack_networking_secgroup_v2.docker_engine.id])
+  security_groups = concat(var.sec_groups, [openstack_networking_secgroup_v2.docker_engine.name])
   key_pair        = var.key_pair
   user_data       = local.cloud-init["${local.manager_prefix}1"]
   image_id        = local.image_id
+  tags            = []
 
   dynamic "personality" {
     for_each = var.configs
@@ -54,6 +55,14 @@ resource "openstack_compute_instance_v2" "manager1" {
     source_type           = "blank"
     volume_size           = var.manager_size
     guest_format          = "ext4"
+  }
+
+  network {
+    name = var.private_network
+  }
+
+  scheduler_hints {
+    group = openstack_compute_servergroup_v2.managers.id
   }
 
   #connection {

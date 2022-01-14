@@ -2,7 +2,7 @@ resource "openstack_compute_instance_v2" "worker" {
   for_each        = local.workers
   name            = each.key
   flavor_name     = coalesce(each.value.flavor_name, var.manager_flavor)
-  security_groups = concat(var.sec_groups, [openstack_networking_secgroup_v2.docker_engine.id])
+  security_groups = concat(var.sec_groups, [openstack_networking_secgroup_v2.docker_engine.name])
   key_pair        = var.key_pair
   user_data       = local.cloud-init[each.key]
   image_id        = local.image_id
