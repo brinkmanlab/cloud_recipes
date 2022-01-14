@@ -70,9 +70,24 @@ resource "openstack_compute_instance_v2" "manager1" {
   #}
 }
 
-resource "sshcommand_command" "init_manager" {
+# TODO this only works on initial swarm creation.
+# reinstancing manager1 would result in completely recreating the swarm rather than just re-registering manager1 with the swarm
+# need some mechanism to point all managers at "leader" that is simply manager1 OR an existing manager if manager1 is being reinstanced
+
+resource "sshcommand_command" "init_swarm" {
   host                  = openstack_compute_floatingip_associate_v2.manager1.floating_ip
-  command               = "until [[ -f ${local.signal} ]]; do sleep 1; done; sudo docker swarm init --advertise-addr ${openstack_compute_instance_v2.manager1.access_ip_v4} #${openstack_compute_instance_v2.manager1.id}"
+  command               = "until [[ -f ${local.signal} ]]; do sleep 1; done; sudo docker swarm init --advertise-addr ${openstack_compute_instance_v2.manager1.access_ip_v4}"
+  private_key           = var.private_key
+  user                  = var.vm_user
+  retry                 = true
+  retry_timeout         = "10m"
+  connection_timeout    = "30s"
+  ignore_execute_errors = true
+}
+
+resource "sshcommand_command" "init_manager" { # Rejoins manager1 to existing swarm in the event that manager1 is reinstanced
+  host                  = openstack_compute_floatingip_associate_v2.manager1.floating_ip
+  command               = "until [[ -f ${local.signal} ]]; do sleep 1; done; sudo docker system info | grep 'Swarm: inactive' && sudo docker swarm join --token ${local.manager_token} ${openstack_compute_instance_v2.manager[0].access_ip_v4}:2377 #${openstack_compute_instance_v2.manager1.id}"
   private_key           = var.private_key
   user                  = var.vm_user
   retry                 = true

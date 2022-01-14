@@ -44,7 +44,7 @@ resource "openstack_images_image_v2" "engine" {
 resource "sshcommand_command" "manager_token" {
   depends_on  = [sshcommand_command.init_manager]
   host        = openstack_compute_floatingip_associate_v2.manager1.floating_ip
-  command     = "docker swarm join-token -q manager #${openstack_compute_instance_v2.manager1.id}"
+  command     = "docker swarm join-token -q manager"
   private_key = var.private_key
   user        = var.vm_user
 }
@@ -52,7 +52,7 @@ resource "sshcommand_command" "manager_token" {
 resource "sshcommand_command" "worker_token" {
   depends_on  = [sshcommand_command.init_manager]
   host        = openstack_compute_floatingip_associate_v2.manager1.floating_ip
-  command     = "docker swarm join-token -q worker #${openstack_compute_instance_v2.manager1.id}"
+  command     = "docker swarm join-token -q worker"
   private_key = var.private_key
   user        = var.vm_user
 }
