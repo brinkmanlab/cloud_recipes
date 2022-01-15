@@ -61,6 +61,16 @@ resource "openstack_compute_instance_v2" "manager1" {
     guest_format          = "ext4"
   }
 
+  dynamic "block_device" {
+    for_each = var.manager1_additional_volumes
+    content {
+      boot_index       = -1
+      uuid             = block_device.value
+      source_type      = "volume"
+      destination_type = "volume"
+    }
+  }
+
   network {
     name = var.private_network
   }

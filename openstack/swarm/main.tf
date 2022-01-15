@@ -8,6 +8,7 @@ locals {
   cloud-init = { for n in concat(keys(local.workers), [for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}"]) : n => join("\n", ["#cloud-config", yamlencode({
     mounts : [
       # https://www.freedesktop.org/software/systemd/man/systemd.mount.html#x-systemd.makefs
+      # TODO https://docs.docker.com/storage/storagedriver/device-mapper-driver/
       ["ephemeral0", "/var/lib/docker", "ext4", "defaults,nofail,x-systemd.makefs,requires=cloud-init.service,comment=cloudconfig"],
     ]
     # https://cloudinit.readthedocs.io/en/latest/topics/examples.html#run-commands-on-first-boot

@@ -68,6 +68,16 @@ resource "openstack_compute_instance_v2" "manager" {
     }
   }
 
+  dynamic "block_device" {
+    for_each = try(var.manager_additional_volumes[count.index], [])
+    content {
+      boot_index       = -1
+      uuid             = block_device.value
+      source_type      = "volume"
+      destination_type = "volume"
+    }
+  }
+
   scheduler_hints {
     group = openstack_compute_servergroup_v2.managers.id
   }

@@ -59,6 +59,16 @@ resource "openstack_compute_instance_v2" "worker" {
     }
   }
 
+  dynamic "block_device" {
+    for_each = try(each.value.additional_volumes[count.index], [])
+    content {
+      boot_index       = -1
+      uuid             = block_device.value
+      source_type      = "volume"
+      destination_type = "volume"
+    }
+  }
+
   dynamic "network" {
     for_each = coalesce(each.value.networks, [var.private_network])
     content {
