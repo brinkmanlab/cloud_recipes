@@ -1,3 +1,8 @@
+# TODO data.openstack_compute_flavor_v2.manager1.extra_specs["aggregate_instance_extra_specs:persistent"] == "true" to determine if local volumes permitted
+#data "openstack_compute_flavor_v2" "manager1" {
+#  name = var.manager1_flavor
+#}
+
 resource "openstack_compute_instance_v2" "manager1" {
   name            = "${local.manager_prefix}1"
   flavor_name     = var.manager1_flavor
@@ -47,7 +52,6 @@ resource "openstack_compute_instance_v2" "manager1" {
     }
   }
 
-  # TODO mount fast drive to /var/lib/docker for docker data
   block_device {
     boot_index            = -1
     delete_on_termination = true

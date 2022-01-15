@@ -56,7 +56,6 @@ resource "openstack_compute_instance_v2" "manager" {
     }
   }
 
-  # TODO mount fast drive to /var/lib/docker for docker data
   dynamic "block_device" {
     for_each = range(var.manager_local_storage && var.manager_size > 0 ? 1 : 0)
     content {

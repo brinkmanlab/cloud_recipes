@@ -47,7 +47,6 @@ resource "openstack_compute_instance_v2" "worker" {
     }
   }
 
-  # TODO mount fast drive to /var/lib/docker for docker data
   dynamic "block_device" {
     for_each = range(each.value.local_storage && each.value.size > 0 ? 1 : 0)
     content {
