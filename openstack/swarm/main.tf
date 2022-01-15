@@ -6,24 +6,25 @@ locals {
   image_id       = var.image_name == null ? openstack_images_image_v2.engine[0].id : data.openstack_images_image_v2.engine[0].id
   signal         = "/tmp/ready_signal"
   cloud-init = { for n in concat(keys(local.workers), [for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}"]) : n => join("\n", ["#cloud-config", yamlencode({
+    mounts : [
+      # https://www.freedesktop.org/software/systemd/man/systemd.mount.html#x-systemd.makefs
+      ["ephemeral0", "/var/lib/docker", "ext4", "defaults,nofail,x-systemd.makefs,requires=cloud-init.service,comment=cloudconfig"],
+    ]
     # https://cloudinit.readthedocs.io/en/latest/topics/examples.html#run-commands-on-first-boot
-    runcmd : concat([
-      #TODO this needs work to skip/init swap
-      "lsblk -ndpo NAME | while read path; do if [[ ! -e $${path}1 ]]; then parted -a optimal $${path} mklabel gpt mkpart primary 0% 100% && mkfs.ext4 $${path}1 && echo \"$${path}1 /var/lib/docker ext4 defaults 0 0\" >> /etc/fstab; fi; done",
-      "mount -a",
-      "systemctl daemon-reload",
-      "dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo",
-      "dnf update -y",
-      "yum install -y docker-ce docker-ce-cli containerd.io",
-      "systemctl enable docker",
-      "systemctl start docker",
-      "groupadd docker",
-      "usermod -aG docker ${var.vm_user}",
-      ], var.init-cmds, try(local.workers[n]["init-cmds"], []), [
-      "touch ${local.signal}",
+    runcmd : concat(
+      [
+        "dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo",
+        "dnf update -y",
+        "yum install -y docker-ce docker-ce-cli containerd.io",
+        "systemctl enable docker",
+        "systemctl start docker",
+        "groupadd docker",
+        "usermod -aG docker ${var.vm_user}",
+        ], var.init-cmds, try(local.workers[n]["init-cmds"], []), [
+        "touch ${local.signal}",
     ])
   })]) }
-  workers = merge([for n, v in var.worker_flavors : zipmap([for i in range(1, v.count + 1) : "${local.worker_prefix}${n}${i}"], [for i in range(v.count) : merge({ worker_flavor : n }, v)])]...)
+  workers = merge([for n, v in var.worker_flavors : zipmap([for i in range(1, v.count + 1) : "${local.worker_prefix}${n}${i}"], [for i in range(v.count) : merge(v, { worker_flavor : n })])]...)
 }
 
 data "openstack_images_image_v2" "engine" {
