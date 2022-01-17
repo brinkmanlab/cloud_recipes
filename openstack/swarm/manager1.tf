@@ -108,7 +108,6 @@ resource "sshcommand_command" "init_swarm" {
 }
 
 resource "sshcommand_command" "init_manager" { # Rejoins manager1 to existing swarm in the event that manager1 is reinstanced
-  depends_on            = [openstack_compute_instance_v2.manager[0]]
   host                  = openstack_compute_floatingip_associate_v2.manager1.floating_ip
   command               = "until [[ -f ${local.signal} ]]; do sleep 1; done; sudo docker system info | grep 'Swarm: inactive' && sudo docker swarm join --token ${local.manager_token} ${openstack_compute_instance_v2.manager[0].access_ip_v4}:2377 #${openstack_compute_instance_v2.manager1.id}"
   private_key           = var.private_key
