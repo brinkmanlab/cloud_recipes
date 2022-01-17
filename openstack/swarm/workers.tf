@@ -64,7 +64,7 @@ resource "openstack_compute_instance_v2" "worker" {
   }
 
   dynamic "block_device" {
-    for_each = try(each.value.additional_volumes[count.index], [])
+    for_each = try(each.value.additional_volumes, [])
     content {
       boot_index       = -1
       uuid             = block_device.value

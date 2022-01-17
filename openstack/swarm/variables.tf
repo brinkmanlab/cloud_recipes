@@ -143,17 +143,17 @@ variable "master_labels" {
 
 variable "worker_flavors" {
   type = map(object({
-    docker_conf      = map(any)           # Map of daemon config options. See var.docker_conf_master1.
-    labels           = map(string)        # Map of node labels
-    size             = number             # Hard drive allocation size
-    configs          = map(string)        # Map of paths to content to write to node before init
-    count            = number             # Number of replicas
-    node_flavor      = string             # Openstack VM flavor name
-    init-cmds        = list(string)       # List of shell commands to run on each node during init
-    local_storage    = bool               # flavor supports local storage
-    swap_size        = number             # Size of swap disk to allocate
-    networks         = list(string)       # List of networks to attach to node
-    addition_volumes = list(list(string)) # List of lists of UUIDs to mount to respective manager replicas
+    docker_conf      = map(any)     # Map of daemon config options. See var.docker_conf_master1.
+    labels           = map(string)  # Map of node labels
+    size             = number       # Hard drive allocation size
+    configs          = map(string)  # Map of paths to content to write to node before init
+    count            = number       # Number of replicas
+    node_flavor      = string       # Openstack VM flavor name
+    init-cmds        = list(string) # List of shell commands to run on each node during init
+    local_storage    = bool         # flavor supports local storage
+    swap_size        = number       # Size of swap disk to allocate
+    networks         = list(string) # List of networks to attach to node
+    addition_volumes = list(string) # List of volume UUIDs to mount
   }))
   default     = {}
   description = "Docker daemon configuration. https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file"
