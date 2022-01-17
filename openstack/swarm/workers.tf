@@ -7,6 +7,10 @@ resource "openstack_compute_instance_v2" "worker" {
   user_data       = local.cloud-init[each.key]
   image_id        = local.image_id
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   dynamic "personality" {
     for_each = merge(var.configs, each.value.configs)
     content {

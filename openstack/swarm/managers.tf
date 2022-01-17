@@ -16,6 +16,10 @@ resource "openstack_compute_instance_v2" "manager" {
   user_data       = local.cloud-init["${local.manager_prefix}${count.index + 2}"]
   image_id        = local.image_id
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   dynamic "personality" {
     for_each = var.configs
     content {
