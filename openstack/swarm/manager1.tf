@@ -103,7 +103,7 @@ resource "sshcommand_command" "init_swarm" {
   connection_timeout    = "30s"
   ignore_execute_errors = true
   lifecycle {
-    ignore_changes = [all]
+    ignore_changes = all
   }
 }
 
