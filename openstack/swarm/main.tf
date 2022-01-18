@@ -6,6 +6,14 @@ locals {
   image_id       = var.image_name == null ? openstack_images_image_v2.engine[0].id : data.openstack_images_image_v2.engine[0].id
   signal         = "/tmp/ready_signal"
   cloud-init = { for n in concat(keys(local.workers), [for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}"]) : n => join("\n", ["#cloud-config", yamlencode({
+    yum_repos : {
+      aventer-rel : {
+        name    = "AVENTER stable repository $releasever"
+        baseurl = "http://rpm.aventer.biz/CentOS/$releasever/$basearch/"
+        enabled = 1
+        gpgkey  = "https://www.aventer.biz/CentOS/support_aventer.asc"
+      }
+    }
     mounts : [
       # https://www.freedesktop.org/software/systemd/man/systemd.mount.html#x-systemd.makefs
       # TODO https://docs.docker.com/storage/storagedriver/device-mapper-driver/
@@ -16,7 +24,7 @@ locals {
       [
         "dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo",
         "dnf update -y",
-        "yum install -y docker-ce docker-ce-cli containerd.io",
+        "yum install -y docker-ce docker-ce-cli containerd.io rexray",
         "systemctl enable docker",
         "systemctl start docker",
         "groupadd docker",
