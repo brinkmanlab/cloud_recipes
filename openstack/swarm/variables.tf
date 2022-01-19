@@ -26,12 +26,6 @@ variable "manager1_local_storage" {
   description = "Is local storage available for the specified flavor"
 }
 
-variable "manager1_additional_volumes" {
-  type        = list(string)
-  default     = []
-  description = "UUIDs of additional volumes to mount to node"
-}
-
 variable "manager_replicates" {
   type        = number
   default     = 2
@@ -68,9 +62,9 @@ variable "manager_swap_size" {
 }
 
 variable "manager_additional_volumes" {
-  type        = list(list(string))
+  type        = list(map(string))
   default     = []
-  description = "List of lists of UUIDs to mount to respective manager replicas"
+  description = "List of maps of paths keyed on UUIDs to mount to respective manager replicas"
 }
 
 variable "image_url" {
