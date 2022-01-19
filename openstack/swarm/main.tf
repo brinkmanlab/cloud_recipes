@@ -56,10 +56,10 @@ locals {
         "dnf update -y",
         "yum install -y docker-ce docker-ce-cli containerd.io", # rexray",
         "systemctl enable docker",
-        "systemctl start docker",
         "groupadd docker",
         "usermod -aG docker ${var.vm_user}",
         ], var.init-cmds, try(local.workers[n]["init-cmds"], []), [
+        "systemctl start docker",
         "touch ${local.signal}",
     ])
   })]) }
