@@ -62,7 +62,7 @@ resource "openstack_compute_instance_v2" "manager1" {
   }
 
   dynamic "block_device" {
-    for_each = var.manager_additional_volumes[0]
+    for_each = try(var.manager_additional_volumes[0], {})
     content {
       boot_index       = -1
       uuid             = block_device.key
