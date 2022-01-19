@@ -17,7 +17,7 @@ locals {
     #  }
     #}
     # https://www.freedesktop.org/software/systemd/man/systemd.mount.html#x-systemd.makefs
-    mount_default_fields : ["none", "none", "ext4", "defaults,nofail,x-systemd.makefs,requires=cloud-init.service,comment=cloudconfig", "0", "2"]
+    mount_default_fields : ["none", "none", "ext4", "defaults,nofail,x-systemd.makefs,x-systemd.requires=cloud-init.service", "0", "2"]
     mounts : concat([
       # TODO https://docs.docker.com/storage/storagedriver/device-mapper-driver/
       ["vdb", "/var/lib/docker"],
