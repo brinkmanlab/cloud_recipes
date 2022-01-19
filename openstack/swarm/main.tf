@@ -5,19 +5,13 @@ locals {
   worker_prefix  = "swarm_worker_"
   image_id       = var.image_name == null ? openstack_images_image_v2.engine[0].id : data.openstack_images_image_v2.engine[0].id
   signal         = "/tmp/ready_signal"
-  docker_conf = merge({
-    "${local.manager_prefix}1" : merge(var.docker_conf_master1, {
+  docker_conf = merge(
+    { for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}" => merge(i == 1 ? var.docker_conf_master1 : var.docker_conf_masters, {
       label = [for k, v in merge({
         node_flavor = var.manager_flavor
-        name        = "${local.manager_prefix}1"
-        ingress     = true
-      }, lookup(var.docker_conf_master1, "label", {})) : "${k}=${v}"]
-      }) }, { for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}" => merge(var.docker_conf_masters, {
-      label = [for k, v in merge({
-        node_flavor = var.manager_flavor
-        name        = "${local.manager_prefix}${count.index + 2}"
-        ingress     = count.index < var.manager_fips
-      }, lookup(var.docker_conf_masters, "label", {})) : "${k}=${v}"]
+        name        = "${local.manager_prefix}${i}"
+        ingress     = i <= var.manager_fips
+      }, lookup(i == 1 ? var.docker_conf_master1 : var.docker_conf_masters, "label", {})) : "${k}=${v}"]
       }) }, merge([for n, f in var.worker_flavors : zipmap([for i in range(1, f.count + 1) : "${local.worker_prefix}${n}${i}"], [for i in range(f.count) : merge(f.docker_conf, {
         label = [for k, v in merge({
           node_flavor   = coalesce(f.node_flavor, var.manager_flavor)
