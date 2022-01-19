@@ -5,9 +5,36 @@ locals {
   worker_prefix  = "swarm_worker_"
   image_id       = var.image_name == null ? openstack_images_image_v2.engine[0].id : data.openstack_images_image_v2.engine[0].id
   signal         = "/tmp/ready_signal"
+  docker_conf = merge({
+    "${local.manager_prefix}1" : merge(var.docker_conf_master1, {
+      label = [for k, v in merge({
+        node_flavor = var.manager_flavor
+        name        = "${local.manager_prefix}1"
+        ingress     = true
+      }, lookup(var.docker_conf_master1, "label", {})) : "${k}=${v}"]
+      }) }, { for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}" => merge(var.docker_conf_masters, {
+      label = [for k, v in merge({
+        node_flavor = var.manager_flavor
+        name        = "${local.manager_prefix}${count.index + 2}"
+        ingress     = count.index < var.manager_fips
+      }, lookup(var.docker_conf_masters, "label", {})) : "${k}=${v}"]
+      }) }, merge([for n, f in var.worker_flavors : zipmap([for i in range(1, v.count + 1) : "${local.worker_prefix}${n}${i}"], [for i in range(f.count) : merge(f.docker_conf, {
+        label = [for k, v in merge({
+          node_flavor   = coalesce(f.node_flavor, var.manager_flavor)
+          name          = "${local.worker_prefix}${n}${i}"
+          worker_flavor = f.worker_flavor
+        }, f.labels) : "${k}=${v}"]
+    })])]...)
+  )
   manager_mounts = { for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}" => [for k, v in try(var.manager_additional_volumes[i], []) : ["/dev/disk/by-id/virtio-${substr(k, 0, 20)}", v]] }
   workers        = merge([for n, v in var.worker_flavors : zipmap([for i in range(1, v.count + 1) : "${local.worker_prefix}${n}${i}"], [for i in range(v.count) : merge(v, { worker_flavor : n })])]...)
   cloud-init = { for n in concat(keys(local.workers), [for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}"]) : n => join("\n", ["#cloud-config", yamlencode({
+    write_files : concat([ # https://cloudinit.readthedocs.io/en/latest/topics/modules.html#write-files
+      {
+        content = jsonencode(local.docker_conf[n])
+        path    = "/etc/docker/daemon.json"
+      }
+    ], var.configs, try(local.workers[n]["configs"], []))
     #yum_repos : {
     #  aventer-rel : {
     #    name    = "AVENTER stable repository $releasever"

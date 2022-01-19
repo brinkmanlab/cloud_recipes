@@ -20,25 +20,6 @@ resource "openstack_compute_instance_v2" "manager" {
     create_before_destroy = true
   }
 
-  dynamic "personality" {
-    for_each = var.configs
-    content {
-      file    = personality.key
-      content = personality.value
-    }
-  }
-
-  personality {
-    content = jsonencode(merge(var.docker_conf_masters, {
-      label = [for k, v in merge({
-        node_flavor = var.manager_flavor
-        name        = "${local.manager_prefix}${count.index + 2}"
-        ingress     = count.index < var.manager_fips
-      }, lookup(var.docker_conf_masters, "label", {})) : "${k}=${v}"]
-    }))
-    file = "/etc/docker/daemon.json"
-  }
-
   block_device {
     uuid                  = local.image_id
     source_type           = "image"

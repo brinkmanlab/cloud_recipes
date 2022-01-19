@@ -106,9 +106,9 @@ variable "init-cmds" {
 }
 
 variable "configs" {
-  type        = map(string)
-  default     = {}
-  description = "Map of paths to content to write to node before init (including all workers)"
+  type        = list(map(string))
+  default     = []
+  description = "List of maps to content to write to node before init (including all workers). See https://cloudinit.readthedocs.io/en/latest/topics/modules.html#write-files"
 }
 
 variable "docker_conf_master1" {
@@ -137,17 +137,17 @@ variable "master_labels" {
 
 variable "worker_flavors" {
   type = map(object({
-    docker_conf      = map(any)     # Map of daemon config options. See var.docker_conf_master1.
-    labels           = map(string)  # Map of node labels
-    size             = number       # Hard drive allocation size
-    configs          = map(string)  # Map of paths to content to write to node before init
-    count            = number       # Number of replicas
-    node_flavor      = string       # Openstack VM flavor name
-    init-cmds        = list(string) # List of shell commands to run on each node during init
-    local_storage    = bool         # flavor supports local storage
-    swap_size        = number       # Size of swap disk to allocate
-    networks         = list(string) # List of networks to attach to node
-    addition_volumes = list(string) # List of volume UUIDs to mount
+    docker_conf      = map(any)          # Map of daemon config options. See var.docker_conf_master1.
+    labels           = map(string)       # Map of node labels
+    size             = number            # Hard drive allocation size
+    configs          = list(map(string)) # List of maps to content to write to node before init. See https://cloudinit.readthedocs.io/en/latest/topics/modules.html#write-files"
+    count            = number            # Number of replicas
+    node_flavor      = string            # Openstack VM flavor name
+    init-cmds        = list(string)      # List of shell commands to run on each node during init
+    local_storage    = bool              # flavor supports local storage
+    swap_size        = number            # Size of swap disk to allocate
+    networks         = list(string)      # List of networks to attach to node
+    addition_volumes = list(string)      # List of volume UUIDs to mount
   }))
   default     = {}
   description = "Docker daemon configuration. https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file"

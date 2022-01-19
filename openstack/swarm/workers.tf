@@ -11,25 +11,6 @@ resource "openstack_compute_instance_v2" "worker" {
     create_before_destroy = true
   }
 
-  dynamic "personality" {
-    for_each = merge(var.configs, each.value.configs)
-    content {
-      file    = personality.key
-      content = personality.value
-    }
-  }
-
-  personality {
-    content = jsonencode(merge(each.value.docker_conf, {
-      label = [for k, v in merge({
-        node_flavor   = coalesce(each.value.node_flavor, var.manager_flavor)
-        name          = each.key
-        worker_flavor = each.value.worker_flavor
-      }, each.value.labels) : "${k}=${v}"]
-    }))
-    file = "/etc/docker/daemon.json"
-  }
-
   block_device {
     uuid                  = local.image_id
     source_type           = "image"
