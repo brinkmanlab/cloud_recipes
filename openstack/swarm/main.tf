@@ -18,7 +18,7 @@ locals {
         name        = "${local.manager_prefix}${count.index + 2}"
         ingress     = count.index < var.manager_fips
       }, lookup(var.docker_conf_masters, "label", {})) : "${k}=${v}"]
-      }) }, merge([for n, f in var.worker_flavors : zipmap([for i in range(1, v.count + 1) : "${local.worker_prefix}${n}${i}"], [for i in range(f.count) : merge(f.docker_conf, {
+      }) }, merge([for n, f in var.worker_flavors : zipmap([for i in range(1, f.count + 1) : "${local.worker_prefix}${n}${i}"], [for i in range(f.count) : merge(f.docker_conf, {
         label = [for k, v in merge({
           node_flavor   = coalesce(f.node_flavor, var.manager_flavor)
           name          = "${local.worker_prefix}${n}${i}"
