@@ -5,7 +5,7 @@ locals {
   worker_prefix  = "swarm_worker_"
   image_id       = var.image_name == null ? openstack_images_image_v2.engine[0].id : data.openstack_images_image_v2.engine[0].id
   signal         = "/tmp/ready_signal"
-  manager_mounts = { for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}" => [for k, v in var.manager_additional_volumes[i] : ["UUID=virtio-${substr(k, 0, 20)}", v]] }
+  manager_mounts = { for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}" => [for k, v in try(var.manager_additional_volumes[i], []) : ["UUID=virtio-${substr(k, 0, 20)}", v]] }
   workers        = merge([for n, v in var.worker_flavors : zipmap([for i in range(1, v.count + 1) : "${local.worker_prefix}${n}${i}"], [for i in range(v.count) : merge(v, { worker_flavor : n })])]...)
   cloud-init = { for n in concat(keys(local.workers), [for i in range(1, var.manager_replicates + 2) : "${local.manager_prefix}${i}"]) : n => join("\n", ["#cloud-config", yamlencode({
     #yum_repos : {
