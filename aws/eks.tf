@@ -54,7 +54,7 @@ module "eks" {
       instance_type        = "t3.xlarge"
       asg_min_size         = 1
       asg_desired_capacity = 1
-      asg_max_size         = 10
+      asg_max_size         = var.service_worker_max
 
       kubelet_extra_args = "--node-labels=WorkClass=service"
       tags = concat(local.autoscaler_tag, [{

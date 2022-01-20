@@ -112,3 +112,9 @@ variable "kubelet_verbosity" {
   default     = 2
   description = "--v option for kublet"
 }
+
+variable "service_worker_max" {
+  type        = number
+  default     = 10
+  description = "Maximum number of service workers"
+}
