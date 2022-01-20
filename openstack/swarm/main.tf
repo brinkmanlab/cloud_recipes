@@ -53,6 +53,7 @@ locals {
         "groupadd docker",
         "usermod -aG docker ${var.vm_user}",
         ], var.init-cmds, try(local.workers[n]["init-cmds"], []), [
+        "systemctl restart local-fs.target", # deal with x-systemd.makefs not kicking in on manager1 for some reason
         "systemctl start docker",
         "touch ${local.signal}",
     ])
