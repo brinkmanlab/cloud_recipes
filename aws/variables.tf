@@ -106,3 +106,9 @@ variable "max_worker_lifetime" {
   default     = 259200
   description = "Maximum lifetime (in seconds) of compute nodes (minimum 86400)"
 }
+
+variable "kubelet_verbosity" {
+  type        = number
+  default     = 2
+  description = "--v option for kublet"
+}

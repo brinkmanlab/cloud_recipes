@@ -62,7 +62,7 @@ module "eks" {
         value               = "service"
       }, ])
       cpu_credits          = "unlimited"
-      bootstrap_extra_args = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+      bootstrap_extra_args = "--docker-config-json '${local.docker_json}' --kubelet-extra-args '--v=${var.kublet_verbosity}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
     },
     {
       name                    = "compute"
