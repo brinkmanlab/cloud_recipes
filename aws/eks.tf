@@ -56,14 +56,14 @@ module "eks" {
       asg_desired_capacity = 1
       asg_max_size         = var.service_worker_max
 
-      kubelet_extra_args = "--node-labels=WorkClass=service"
+      kubelet_extra_args = "--node-labels=WorkClass=service --v=${var.kubelet_verbosity}"
       tags = concat(local.autoscaler_tag, [{
         key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
         propagate_at_launch = "true"
         value               = "service"
       }, ])
       cpu_credits          = "unlimited"
-      bootstrap_extra_args = "--docker-config-json '${local.docker_json}' --kubelet-extra-args '--v=${var.kubelet_verbosity}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+      bootstrap_extra_args = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
     },
     {
       name                    = "compute"
