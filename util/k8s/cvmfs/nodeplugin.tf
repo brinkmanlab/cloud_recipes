@@ -9,7 +9,7 @@ See https://github.com/kubernetes-csi/node-driver-registrar
 */
 
 locals {
-  liveness_probe = ["bash", "-c", "! cvmfs_config probe | grep -v OK"] # TODO factor out into variable when refactoring entire module into two, CSI and CVMFS
+  liveness_probe = null # TODO 'cvmfs_config probe' leaves zombie process that accumulates and crashes node ["bash", "-c", "! cvmfs_config probe | grep -v OK"] # TODO factor out into variable when refactoring entire module into two, CSI and CVMFS
 }
 
 resource "kubernetes_service_account" "nodeplugin" {
