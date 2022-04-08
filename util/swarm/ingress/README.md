@@ -5,9 +5,7 @@ This module provides a HAProxy deployment to manage service ingress into the swa
 <!-- BEGIN_TF_DOCS -->
 ## Providers
 
-| Name | Version |
-|------|---------|
-| <a name="provider_docker"></a> [docker](#provider\_docker) | n/a |
+No providers.
 
 ## Inputs
 
@@ -19,9 +17,5 @@ No outputs.
 
 ## Resources
 
-| Name | Type |
-|------|------|
-| [docker_config.haproxy](https://registry.terraform.io/providers/hashicorp/docker/latest/docs/resources/config) | resource |
-| [docker_service.lb](https://registry.terraform.io/providers/hashicorp/docker/latest/docs/resources/service) | resource |
-| [docker_network.ingress](https://registry.terraform.io/providers/hashicorp/docker/latest/docs/data-sources/network) | data source |
+No resources.
 <!-- END_TF_DOCS -->
