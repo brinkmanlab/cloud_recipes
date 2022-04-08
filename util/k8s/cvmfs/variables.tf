@@ -4,28 +4,33 @@ variable "namespace" {
 }
 
 variable "csi_attacher_tag" {
-  type    = string
-  default = "v3.0.0"
+  type        = string
+  default     = "v3.0.0"
+  description = "Tag for CSI Attacher image"
 }
 
 variable "csi_provisioner_tag" {
-  type    = string
-  default = "v2.0.2"
+  type        = string
+  default     = "v2.0.2"
+  description = "Tag for CSI Provisioner image"
 }
 
 variable "csi_node_driver_tag" {
-  type    = string
-  default = "v2.0.1"
+  type        = string
+  default     = "v2.0.1"
+  description = "Tag for CSI Node Driver image"
 }
 
 variable "cvmfs_csi_tag" {
-  type    = string
-  default = "1.2.0"
+  type        = string
+  default     = "1.2.0"
+  description = "Tag for cvmfs_csi_driver image"
 }
 
 variable "cvmfs_csi_driver" {
-  type    = string
-  default = "brinkmanlab/csi-cvmfsplugin"
+  type        = string
+  default     = "brinkmanlab/csi-cvmfsplugin"
+  description = "CSI driver image"
 }
 
 variable "cvmfs_keys" {

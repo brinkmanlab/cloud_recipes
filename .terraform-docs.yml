@@ -1,0 +1,18 @@
+formatter: "markdown"
+
+sections:
+  hide:
+    - requirements
+
+output:
+  file: README.md
+  mode: inject
+
+content: |-
+  {{ .Providers }}
+
+  {{ .Inputs }}
+
+  {{ .Outputs }}
+
+  {{ .Resources }}
