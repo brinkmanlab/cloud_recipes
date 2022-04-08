@@ -2,8 +2,12 @@ name: Generate terraform docs
 on:
   pull_request:
     branches: [master]
+    paths:
+      - "**.tf"
   push:
     branches: [master]
+    paths:
+      - "**.tf"
 
 jobs:
   docs:

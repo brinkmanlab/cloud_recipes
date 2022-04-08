@@ -2,8 +2,8 @@
 
 This module contains everything necessary for a pushbutton deployment of AWS EKS. 
 This includes a dashboard, autoscaler, and three preconfigured compute classes.
-"services", "compute", and "big-compute" are available to schedule pods by specifying them via 
-`node_selector = { WorkClass = "service" }` in the pod specification. `services` is composed of t3.xlarge nodes and scales to a minimum of 1.
+"service", "compute", and "big-compute" are available to schedule pods by specifying them via 
+`node_selector = { WorkClass = "service" }` in the pod specification. `service` is composed of t3.xlarge nodes and scales to a minimum of 1.
 `compute` and `big-compute` is composed of the cheapest available spot instance nodes and scales to 0 when idle. `big-compute` has a minimum of 8 cpus.
 
 ## Use
