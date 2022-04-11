@@ -11,6 +11,8 @@ output:
 content: |-
   {{ .Providers }}
 
+  {{ .Modules }}
+
   {{ .Inputs }}
 
   {{ .Outputs }}

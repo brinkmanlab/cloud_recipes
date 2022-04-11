@@ -35,6 +35,10 @@ resource "kubernetes_persistent_volume_claim" "microbedb" {
 | <a name="provider_http"></a> [http](#provider\_http) | n/a |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | n/a |
 
+## Modules
+
+No modules.
+
 ## Inputs
 
 | Name | Description | Type | Default | Required |

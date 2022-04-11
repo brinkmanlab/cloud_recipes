@@ -12,6 +12,10 @@ See the [provided example](/examples/swarm/) for a demonstration of this modules
 | <a name="provider_openstack"></a> [openstack](#provider\_openstack) | n/a |
 | <a name="provider_sshcommand"></a> [sshcommand](#provider\_sshcommand) | 0.2.2 |
 
+## Modules
+
+No modules.
+
 ## Inputs
 
 | Name | Description | Type | Default | Required |

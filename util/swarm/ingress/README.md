@@ -7,6 +7,10 @@ This module provides a HAProxy deployment to manage service ingress into the swa
 
 No providers.
 
+## Modules
+
+No modules.
+
 ## Inputs
 
 No inputs.

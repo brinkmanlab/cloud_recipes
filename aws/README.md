@@ -34,6 +34,13 @@ See the [provided example](/examples/aws/) for a demonstration of this modules u
 | <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | n/a |
 
+## Modules
+
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 17.24.0 |
+| <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | n/a |
+
 ## Inputs
 
 | Name | Description | Type | Default | Required |
