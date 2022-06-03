@@ -47,6 +47,34 @@ module "eks" {
   map_roles                     = var.map_roles
   map_users                     = var.map_users
 
+  # TODO Configure compute jobs to run on fargate
+  # https://github.com/terraform-aws-modules/terraform-aws-eks/tree/3ff17205a4ead51cca993547ef3de42cc080043b/examples/fargate_profile
+  # aws_auth_fargate_profile_pod_execution_role_arns = []
+  # fargate_profiles = {
+  #  default = {
+  #    name = "default"
+  #    selectors = [
+  #      {
+  #        namespace = "kube-system"
+  #        labels = {
+  #          k8s-app = "kube-dns"
+  #        }
+  #      },
+  #      {
+  #        namespace = "default"
+  #      }
+  #    ]
+  #    tags = {
+  #      Owner = "test"
+  #    }
+  #    timeouts = {
+  #      create = "20m"
+  #      delete = "20m"
+  #    }
+  #  }
+  # }
+  # fargate_profile_defaults = {}
+
   worker_groups_launch_template = [
     # https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/spot-instances.md#using-launch-templates
     {
