@@ -17,6 +17,8 @@ Run `aws-iam-authenticator token -i <cluster name> --token-only` to get the requ
 Configure `kubectl` by running `aws eks --region us-west-2 update-kubeconfig --name <cluster name>`.
 
 Services accessible via `kubectl proxy` can be listed by running `kubectl cluster-info`.
+Run `kubectl proxy` and visit [here](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login) to
+access the dashboard.
 
 Updating the Kubernetes version does not update the managed add-ons deployed with it. 
 See [coredns](https://docs.aws.amazon.com/eks/latest/userguide/managing-coredns.html#updating-coredns-add-on), 
