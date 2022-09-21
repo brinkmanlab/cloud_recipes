@@ -118,3 +118,10 @@ variable "service_worker_max" {
   default     = 10
   description = "Maximum number of service workers"
 }
+
+
+variable "dashboard_default_namespace" {
+  type        = string
+  default     = "default"
+  description = "The default namespace to show when logging into the dashboard"
+}

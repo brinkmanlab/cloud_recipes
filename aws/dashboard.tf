@@ -83,6 +83,18 @@ resource "kubernetes_config_map" "kube_dashboard_settings" {
       "k8s-app" = "kubernetes-dashboard"
     }
   }
+  data = {
+    "_global" = jsonencode({
+      clusterName                      = local.cluster_name
+      defaultNamespace                 = var.dashboard_default_namespace
+      disableAccessDeniedNotifications = false
+      itemsPerPage                     = 10
+      labelsLimit                      = 3
+      logsAutoRefreshTimeInterval      = 5
+      namespaceFallbackList            = ["default", ]
+      resourceAutoRefreshTimeInterval  = 5
+    })
+  }
 }
 
 resource "kubernetes_role" "kube_dashboard" {
