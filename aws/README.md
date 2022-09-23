@@ -14,7 +14,7 @@ credentials to use for deployment. The user deploying the cluster will automatic
 
 Run `aws-iam-authenticator token -i <cluster name> --token-only` to get the required token for the dashboard.
 
-Configure `kubectl` by running `aws eks --region us-west-2 update-kubeconfig --name <cluster name>`.
+Configure `kubectl` by running `aws eks --region us-east-1 update-kubeconfig --name <cluster name>`.
 
 Services accessible via `kubectl proxy` can be listed by running `kubectl cluster-info`.
 Run `kubectl proxy` and visit [here](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login) to
