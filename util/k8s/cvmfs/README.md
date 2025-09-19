@@ -49,7 +49,7 @@ No modules.
 | <a name="input_cvmfs_csi_driver"></a> [cvmfs\_csi\_driver](#input\_cvmfs\_csi\_driver) | CSI driver image | `string` | `"brinkmanlab/csi-cvmfsplugin"` | no |
 | <a name="input_cvmfs_csi_tag"></a> [cvmfs\_csi\_tag](#input\_cvmfs\_csi\_tag) | Tag for cvmfs\_csi\_driver image | `string` | `"1.2.0"` | no |
 | <a name="input_cvmfs_keys"></a> [cvmfs\_keys](#input\_cvmfs\_keys) | CVMFS Repository public keys keyed on repo name | `map(string)` | n/a | yes |
-| <a name="input_cvmfs_repos"></a> [cvmfs\_repos](#input\_cvmfs\_repos) | CVMFS Repositories to mount. Tag defaults to 'trunk'. | <pre>map(object({<br>    repo : string<br>    tag : string<br>  }))</pre> | `{}` | no |
+| <a name="input_cvmfs_repos"></a> [cvmfs\_repos](#input\_cvmfs\_repos) | CVMFS Repositories to mount. Tag defaults to 'trunk'. | <pre>map(object({<br/>    repo : string<br/>    tag : string<br/>  }))</pre> | `{}` | no |
 | <a name="input_extra_config"></a> [extra\_config](#input\_extra\_config) | Extra CVMFS Key-values to include in default local | `map(string)` | `{}` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Instance of kubernetes\_namespace to provision instance resources under | `any` | `null` | no |
 | <a name="input_servers"></a> [servers](#input\_servers) | Set of servers as provided to CVMFS\_SERVER\_URL | `set(string)` | `[]` | no |

@@ -40,7 +40,8 @@ See the [provided example](/examples/aws/) for a demonstration of this modules u
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 17.24.0 |
+| <a name="module_alb_ingress_controller"></a> [alb\_ingress\_controller](#module\_alb\_ingress\_controller) | iplabs/alb-ingress-controller/kubernetes | 3.4.0 |
+| <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 21.3.1 |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | n/a |
 
 ## Inputs
@@ -50,15 +51,16 @@ See the [provided example](/examples/aws/) for a demonstration of this modules u
 | <a name="input_autoscaler_version"></a> [autoscaler\_version](#input\_autoscaler\_version) | n/a | `string` | `"1.21.1"` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | n/a | `string` | n/a | yes |
 | <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | Kubernetes cluster version | `string` | `"1.21"` | no |
+| <a name="input_dashboard_default_namespace"></a> [dashboard\_default\_namespace](#input\_dashboard\_default\_namespace) | The default namespace to show when logging into the dashboard | `string` | `"default"` | no |
 | <a name="input_dashboard_version"></a> [dashboard\_version](#input\_dashboard\_version) | n/a | `string` | `"2.4.0"` | no |
 | <a name="input_debug"></a> [debug](#input\_debug) | n/a | `bool` | `false` | no |
-| <a name="input_docker_registry_proxies"></a> [docker\_registry\_proxies](#input\_docker\_registry\_proxies) | Docker registries to proxy | <pre>map(object({<br>    hostname = string<br>    url      = string<br>    username = string<br>    password = string<br>  }))</pre> | `{}` | no |
+| <a name="input_docker_registry_proxies"></a> [docker\_registry\_proxies](#input\_docker\_registry\_proxies) | Docker registries to proxy | <pre>map(object({<br/>    hostname = string<br/>    url      = string<br/>    username = string<br/>    password = string<br/>  }))</pre> | `{}` | no |
 | <a name="input_docker_registry_version"></a> [docker\_registry\_version](#input\_docker\_registry\_version) | Image tag of docker registry | `string` | `"0.9.1"` | no |
 | <a name="input_instance"></a> [instance](#input\_instance) | n/a | `string` | `""` | no |
 | <a name="input_kubelet_verbosity"></a> [kubelet\_verbosity](#input\_kubelet\_verbosity) | --v option for kublet | `number` | `2` | no |
 | <a name="input_map_accounts"></a> [map\_accounts](#input\_map\_accounts) | Additional AWS account numbers to add to the aws-auth configmap. ex: "777777777777" | `list(string)` | `[]` | no |
-| <a name="input_map_roles"></a> [map\_roles](#input\_map\_roles) | Additional IAM roles to add to the aws-auth configmap. ex:<br>{<br>  rolearn  = "arn:aws:iam::66666666666:role/role1"<br>  username = "role1"<br>  groups   = ["system:masters"]<br>} | <pre>list(object({<br>    rolearn  = string<br>    username = string<br>    groups   = list(string)<br>  }))</pre> | `[]` | no |
-| <a name="input_map_users"></a> [map\_users](#input\_map\_users) | Additional IAM users to add to the aws-auth configmap. ex:<br>{<br>  userarn  = "arn:aws:iam::66666666666:user/user1"<br>  username = "user1"<br>  groups   = ["system:masters"]<br>} | <pre>list(object({<br>    userarn  = string<br>    username = string<br>    groups   = list(string)<br>  }))</pre> | `[]` | no |
+| <a name="input_map_roles"></a> [map\_roles](#input\_map\_roles) | Additional IAM roles to add to the aws-auth configmap. ex:<br/>{<br/>  rolearn  = "arn:aws:iam::66666666666:role/role1"<br/>  username = "role1"<br/>  groups   = ["system:masters"]<br/>} | <pre>list(object({<br/>    rolearn  = string<br/>    username = string<br/>    groups   = list(string)<br/>  }))</pre> | `[]` | no |
+| <a name="input_map_users"></a> [map\_users](#input\_map\_users) | Additional IAM users to add to the aws-auth configmap. ex:<br/>{<br/>  userarn  = "arn:aws:iam::66666666666:user/user1"<br/>  username = "user1"<br/>  groups   = ["system:masters"]<br/>} | <pre>list(object({<br/>    userarn  = string<br/>    username = string<br/>    groups   = list(string)<br/>  }))</pre> | `[]` | no |
 | <a name="input_max_worker_lifetime"></a> [max\_worker\_lifetime](#input\_max\_worker\_lifetime) | Maximum lifetime (in seconds) of compute nodes (minimum 86400) | `number` | `259200` | no |
 | <a name="input_metrics_scraper_version"></a> [metrics\_scraper\_version](#input\_metrics\_scraper\_version) | n/a | `string` | `"1.0.7"` | no |
 | <a name="input_metrics_server_version"></a> [metrics\_server\_version](#input\_metrics\_server\_version) | n/a | `string` | `"0.3.6"` | no |
