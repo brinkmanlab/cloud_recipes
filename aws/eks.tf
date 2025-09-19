@@ -34,7 +34,7 @@ module "eks" {
   version          = "18.31.2"
   cluster_name     = var.cluster_name
   cluster_version  = var.cluster_version
-  subnets          = module.vpc.private_subnets
+  subnet_ids       = module.vpc.private_subnets
   vpc_id           = module.vpc.vpc_id
   write_kubeconfig = false
   iam_path         = "/${local.instance}/"
