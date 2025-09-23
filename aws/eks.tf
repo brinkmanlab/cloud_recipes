@@ -52,11 +52,11 @@ module "eks" {
 
         bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=service --v=${var.kubelet_verbosity}' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
 
-        tags = {concat(local.autoscaler_tag, [{
+        tags = {
           key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
           propagate_at_launch = "true"
           value               = "service"
-        }, ])}
+        }
         cpu_credits           = "unlimited"
     },
     compute = {
@@ -81,11 +81,11 @@ module "eks" {
 
         bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
 
-        tags = {concat(local.autoscaler_tag, [{
+        tags = {
           key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
           propagate_at_launch = "true"
           value               = "compute"
-        }, ])}
+        }
         max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs
     },
     big_compute = {
@@ -106,11 +106,11 @@ module "eks" {
         max_size            = 30
         desired_capacity    = 1
         bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
-        tags = {concat(local.autoscaler_tag, [{
+        tags = {
           key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
           propagate_at_launch = "true"
           value               = "compute"
-        }, ])}
+        }
         max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
     }
   }
