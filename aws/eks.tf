@@ -70,7 +70,7 @@ module "eks" {
           }
           launch_template = {
             override = [
-              { instance_type = local.instance_types }
+              { instance_type = "c5.2xlarge" }
             ]
           }
         }
@@ -98,11 +98,11 @@ module "eks" {
           }
           launch_template = {
             override = [
-              { instance_type = local.large_instance_types }
+              { instance_type = "c4.8xlarge" }
             ]
           }
         }
-        
+
         min_size            = 0
         max_size            = 30
         desired_capacity    = 1
