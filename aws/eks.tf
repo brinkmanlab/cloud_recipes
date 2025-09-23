@@ -31,16 +31,16 @@ locals {
 
 module "eks" {
   source           = "terraform-aws-modules/eks/aws"
-  version          = "20.36.1"
-  cluster_name     = var.cluster_name
-  cluster_version  = var.cluster_version
+  version          = "21.3.1"
+  name     = var.cluster_name
+  kubernetes_version  = var.cluster_version
   subnet_ids       = module.vpc.private_subnets
   vpc_id           = module.vpc.vpc_id
   iam_role_path    = "/${local.instance}/"
 
   enable_irsa                   = true # Outputs oidc_provider_arn
-  create_cluster_security_group = true
-  cluster_enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  create_security_group = true
+  enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   self_managed_node_groups = {
     services = {
@@ -63,9 +63,11 @@ module "eks" {
         name                    = "compute"
         override_instance_types = local.instance_types
 
-        override                = [
-          { instance_type = local.instance_types }
-        ]
+        launch_template = {
+          override                = [
+            { instance_type = local.instance_types }
+          ]
+        }
 
         use_mixed_instances_policy = true
         mixed_instances_policy = {
@@ -85,13 +87,16 @@ module "eks" {
           propagate_at_launch = "true"
           value               = "compute"
         }, ])
-        max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
+        max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs
     },
     big_compute = {
         name                    = "big-compute"
-        override = [
-          { instance_type = local.large_instance_types }
-        ]
+        override_instance_types = local.large_instance_types
+        launch_template = {
+          override = [
+            { instance_type = local.large_instance_types }
+          ]
+        }
         use_mixed_instances_policy = true
         mixed_instances_policy = {
           instances_distribution = {
