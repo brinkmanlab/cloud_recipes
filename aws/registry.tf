@@ -94,15 +94,6 @@ resource "aws_iam_role_policy_attachment" "docker_cache" {
   policy_arn = aws_iam_policy.docker_cache.arn
 }
 
-# TODO docker registry grabs node role and ignores service account
-# https://github.com/docker/distribution/issues/3275
-# https://docs.aws.amazon.com/eks/latest/userguide/restrict-ec2-credential-access.html
-# Delete the following once fixed
-resource "aws_iam_role_policy_attachment" "node_s3" {
-  role       = module.eks.worker_iam_role_name
-  policy_arn = aws_iam_policy.docker_cache.arn
-}
-
 resource "kubernetes_secret" "docker_cache" {
   metadata {
     name      = "docker-cache-config"

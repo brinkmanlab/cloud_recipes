@@ -31,73 +31,90 @@ locals {
 
 module "eks" {
   source           = "terraform-aws-modules/eks/aws"
-  version          = "18.31.2"
-  cluster_name     = var.cluster_name
-  cluster_version  = var.cluster_version
+  version          = "21.3.1"
+  name     = var.cluster_name
+  kubernetes_version  = var.cluster_version
   subnet_ids       = module.vpc.private_subnets
   vpc_id           = module.vpc.vpc_id
-  write_kubeconfig = false
-  iam_path         = "/${local.instance}/"
+  iam_role_path    = "/${local.instance}/"
 
   enable_irsa                   = true # Outputs oidc_provider_arn
-  manage_aws_auth               = true
-  cluster_create_security_group = true
-  cluster_enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
-  map_accounts                  = var.map_accounts
-  map_roles                     = var.map_roles
-  map_users                     = var.map_users
+  create_security_group = true
+  enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-  worker_groups_launch_template = [
-    # https://github.com/terraform-aws-modules/terraform-aws-eks/blob/master/docs/spot-instances.md#using-launch-templates
-    {
-      name                 = "services"
-      instance_type        = "t3.xlarge"
-      asg_min_size         = 1
-      asg_desired_capacity = 1
-      asg_max_size         = var.service_worker_max
+  self_managed_node_groups = {
+    services = {
+        name                 = "services"
+        instance_type        = "t3.xlarge"
+        min_size             = 1
+        desired_size         = 1
+        max_size             = var.service_worker_max
 
-      kubelet_extra_args = "--node-labels=WorkClass=service --v=${var.kubelet_verbosity}"
-      tags = concat(local.autoscaler_tag, [{
-        key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
-        propagate_at_launch = "true"
-        value               = "service"
-      }, ])
-      cpu_credits          = "unlimited"
-      bootstrap_extra_args = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=service --v=${var.kubelet_verbosity}' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+
+        tags = concat(local.autoscaler_tag, [{
+          key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
+          propagate_at_launch = "true"
+          value               = "service"
+        }, ])
+        cpu_credits           = "unlimited"
     },
-    {
-      name                    = "compute"
-      override_instance_types = local.instance_types
-      spot_instance_pools     = length(local.instance_types) # Max 20
-      asg_min_size            = 0
-      asg_max_size            = 30
-      asg_desired_capacity    = 1
-      kubelet_extra_args      = "--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot"
-      tags = concat(local.autoscaler_tag, [{
-        key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
-        propagate_at_launch = "true"
-        value               = "compute"
-      }, ])
-      max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
-      bootstrap_extra_args  = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+    compute = {
+        name                    = "compute"
+        override_instance_types = local.instance_types
+
+        launch_template = {
+          override                = [
+            { instance_type = local.instance_types }
+          ]
+        }
+
+        use_mixed_instances_policy = true
+        mixed_instances_policy = {
+          instances_distribution = {
+            spot_instance_pools     = length(local.instance_types) # Max 20
+          }
+        }
+
+        min_size            = 0
+        max_size            = 30
+        desired_capacity    = 1
+
+        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
+
+        tags = concat(local.autoscaler_tag, [{
+          key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
+          propagate_at_launch = "true"
+          value               = "compute"
+        }, ])
+        max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs
     },
-    {
-      name                    = "big-compute"
-      override_instance_types = local.large_instance_types
-      spot_instance_pools     = length(local.large_instance_types) # Max 20
-      asg_min_size            = 0
-      asg_max_size            = 30
-      asg_desired_capacity    = 1
-      kubelet_extra_args      = "--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot"
-      tags = concat(local.autoscaler_tag, [{
-        key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
-        propagate_at_launch = "true"
-        value               = "compute"
-      }, ])
-      max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
-      bootstrap_extra_args  = "--docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
-    },
-  ]
+    big_compute = {
+        name                    = "big-compute"
+        override_instance_types = local.large_instance_types
+        launch_template = {
+          override = [
+            { instance_type = local.large_instance_types }
+          ]
+        }
+        use_mixed_instances_policy = true
+        mixed_instances_policy = {
+          instances_distribution = {
+            spot_instance_pools     = length(local.instance_types) # Max 20
+          }
+        }
+        min_size            = 0
+        max_size            = 30
+        desired_capacity    = 1
+        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
+        tags = concat(local.autoscaler_tag, [{
+          key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
+          propagate_at_launch = "true"
+          value               = "compute"
+        }, ])
+        max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
+    }
+  }
 }
 
 data "aws_eks_cluster" "cluster" {
