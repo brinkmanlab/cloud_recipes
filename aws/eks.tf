@@ -63,16 +63,15 @@ module "eks" {
         name                    = "compute"
         override_instance_types = local.instance_types
 
-        launch_template = {
-          override                = [
-            { instance_type = local.instance_types }
-          ]
-        }
-
         use_mixed_instances_policy = true
         mixed_instances_policy = {
           instances_distribution = {
             spot_instance_pools     = length(local.instance_types) # Max 20
+          }
+          launch_template = {
+            override                = [
+              { instance_type = local.instance_types }
+            ]
           }
         }
 
@@ -92,15 +91,15 @@ module "eks" {
     big_compute = {
         name                    = "big-compute"
         override_instance_types = local.large_instance_types
-        launch_template = {
-          override = [
-            { instance_type = local.large_instance_types }
-          ]
-        }
         use_mixed_instances_policy = true
         mixed_instances_policy = {
           instances_distribution = {
             spot_instance_pools     = length(local.instance_types) # Max 20
+          }
+          launch_template = {
+            override = [
+              { instance_type = local.large_instance_types }
+            ]
           }
         }
         min_size            = 0
