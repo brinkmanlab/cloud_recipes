@@ -69,7 +69,7 @@ module "eks" {
             spot_instance_pools     = length(local.instance_types) # Max 20
           }
           launch_template = {
-            override                = [
+            override = [
               { instance_type = local.instance_types }
             ]
           }
@@ -94,7 +94,7 @@ module "eks" {
         use_mixed_instances_policy = true
         mixed_instances_policy = {
           instances_distribution = {
-            spot_instance_pools     = length(local.instance_types) # Max 20
+            spot_instance_pools     = length(local.large_instance_types) # Max 20
           }
           launch_template = {
             override = [
@@ -102,6 +102,7 @@ module "eks" {
             ]
           }
         }
+        
         min_size            = 0
         max_size            = 30
         desired_capacity    = 1
