@@ -70,7 +70,25 @@ module "eks" {
           }
           launch_template = {
             override = [
-              { instance_type = "c5.2xlarge" }
+              { instance_type = "c5.2xlarge" },
+              { instance_type = "c5.4xlarge" },
+              { instance_type = "c5.9xlarge" },
+              { instance_type = "c5d.2xlarge" },
+              { instance_type = "c5d.4xlarge" },
+              { instance_type = "c5a.2xlarge" },
+              { instance_type = "c5a.4xlarge" },
+              { instance_type = "c5a.8xlarge" },
+              { instance_type = "c4.4xlarge" },
+              { instance_type = "m5.2xlarge" },
+              { instance_type = "m5.4xlarge" },
+              { instance_type = "m5.8xlarge" },
+              { instance_type = "m5d.2xlarge" },
+              { instance_type = "m5d.4xlarge" },
+              { instance_type = "m5d.8xlarge" },
+              { instance_type = "m5a.2xlarge" },
+              { instance_type = "m5a.4xlarge" },
+              { instance_type = "m4.2xlarge" },
+              { instance_type = "m4.4xlarge" },
             ]
           }
         }
@@ -98,7 +116,22 @@ module "eks" {
           }
           launch_template = {
             override = [
-              { instance_type = "c4.8xlarge" }
+              { instance_type = "c4.8xlarge" },
+              { instance_type = "c5.12xlarge" },
+              { instance_type = "c5.9xlarge" },
+              { instance_type = "c5a.12xlarge" },
+              { instance_type = "c5a.8xlarge" },
+              { instance_type = "c5d.12xlarge" },
+              { instance_type = "c5d.9xlarge" },
+              { instance_type = "c5n.9xlarge" },
+              { instance_type = "m5.12xlarge" },
+              { instance_type = "m5a.12xlarge" },
+              { instance_type = "m5a.8xlarge" },
+              { instance_type = "m5d.12xlarge" },
+              { instance_type = "m5d.8xlarge" },
+              { instance_type = "m5n.12xlarge" },
+              { instance_type = "c4.8xlarge" },
+              { instance_type = "m5n.8xlarge" },
             ]
           }
         }
