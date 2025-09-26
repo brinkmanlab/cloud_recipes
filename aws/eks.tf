@@ -58,6 +58,10 @@ module "eks" {
           value               = "service"
         }
         cpu_credits           = "unlimited"
+        
+        data "aws_ssm_parameter" "ami" {
+          name = "AL2023_x86_64_STANDARD"
+        }
     },
     compute = {
         name                    = "compute"
