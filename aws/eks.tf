@@ -42,7 +42,7 @@ module "eks" {
   create_security_group = true
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-  self_managed_node_groups = {
+  eks_managed_node_groups = {
     services = {
         name                 = "services"
         instance_type        = "t3.xlarge"
@@ -61,37 +61,8 @@ module "eks" {
     },
     compute = {
         name                    = "compute"
-        override_instance_types = local.instance_types
 
-        use_mixed_instances_policy = true
-        mixed_instances_policy = {
-          instances_distribution = {
-            spot_instance_pools     = length(local.instance_types) # Max 20
-          }
-          launch_template = {
-            override = [
-              { instance_type = "c5.2xlarge" },
-              { instance_type = "c5.4xlarge" },
-              { instance_type = "c5.9xlarge" },
-              { instance_type = "c5d.2xlarge" },
-              { instance_type = "c5d.4xlarge" },
-              { instance_type = "c5a.2xlarge" },
-              { instance_type = "c5a.4xlarge" },
-              { instance_type = "c5a.8xlarge" },
-              { instance_type = "c4.4xlarge" },
-              { instance_type = "m5.2xlarge" },
-              { instance_type = "m5.4xlarge" },
-              { instance_type = "m5.8xlarge" },
-              { instance_type = "m5d.2xlarge" },
-              { instance_type = "m5d.4xlarge" },
-              { instance_type = "m5d.8xlarge" },
-              { instance_type = "m5a.2xlarge" },
-              { instance_type = "m5a.4xlarge" },
-              { instance_type = "m5n.12xlarge"},
-              { instance_type = "m4.4xlarge" },
-            ]
-          }
-        }
+        instance_types = local.instance_types
 
         min_size            = 0
         max_size            = 30
@@ -108,33 +79,7 @@ module "eks" {
     },
     big_compute = {
         name                    = "big-compute"
-        override_instance_types = local.large_instance_types
-        use_mixed_instances_policy = true
-        mixed_instances_policy = {
-          instances_distribution = {
-            spot_instance_pools     = length(local.large_instance_types) # Max 20
-          }
-          launch_template = {
-            override = [
-              { instance_type = "c4.8xlarge" },
-              { instance_type = "c5.12xlarge" },
-              { instance_type = "c5.9xlarge" },
-              { instance_type = "c5a.12xlarge" },
-              { instance_type = "c5a.8xlarge" },
-              { instance_type = "c5d.12xlarge" },
-              { instance_type = "c5d.9xlarge" },
-              { instance_type = "c5n.9xlarge" },
-              { instance_type = "m5.12xlarge" },
-              { instance_type = "m5a.12xlarge" },
-              { instance_type = "m5a.8xlarge" },
-              { instance_type = "m5d.12xlarge" },
-              { instance_type = "m5d.8xlarge" },
-              { instance_type = "m5n.12xlarge" },
-              { instance_type = "m5n.8xlarge" },
-            ]
-          }
-        }
-
+        instance_types = local.large_instance_types
         min_size            = 0
         max_size            = 30
         desired_capacity    = 1
