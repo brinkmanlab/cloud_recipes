@@ -3,7 +3,7 @@
 # https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
 
 resource "kubernetes_namespace" "kube_dashboard" {
-  depends_on = [module.eks.cluster_id]
+  depends_on = [module.eks.cluster_name]
   metadata {
     name = "kubernetes-dashboard"
   }

@@ -8,11 +8,11 @@ module "cloud" {
 }
 
 data "aws_eks_cluster" "cluster" {
-  name = module.cloud.eks.cluster_id
+  name = module.cloud.eks.cluster_name
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = module.cloud.eks.cluster_id
+  name = module.cloud.eks.cluster_name
 }
 
 provider "kubernetes" {
