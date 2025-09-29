@@ -130,7 +130,6 @@ module "eks" {
               { instance_type = "m5d.12xlarge" },
               { instance_type = "m5d.8xlarge" },
               { instance_type = "m5n.12xlarge" },
-              { instance_type = "c4.8xlarge" },
               { instance_type = "m5n.8xlarge" },
             ]
           }
