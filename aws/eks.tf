@@ -150,11 +150,11 @@ module "eks" {
 }
 
 data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_name
+  name = module.eks.cluster_id
 }
 
 data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_name
+  name = module.eks.cluster_id
 }
 
 provider "kubernetes" {
@@ -164,7 +164,7 @@ provider "kubernetes" {
 }
 
 module "alb_ingress_controller" {
-  depends_on = [module.eks.cluster_name]
+  depends_on = [module.eks.cluster_id]
   source  = "iplabs/alb-ingress-controller/kubernetes"
   version = "3.4.0"
 
