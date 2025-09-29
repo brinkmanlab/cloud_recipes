@@ -165,7 +165,7 @@ provider "kubernetes" {
 }
 
 module "alb_ingress_controller" {
-  depends_on = [module.eks.cluster_id]
+  depends_on = [module.eks.cluster_name]
   source  = "iplabs/alb-ingress-controller/kubernetes"
   version = "3.4.0"
 
