@@ -33,6 +33,8 @@ module "eks" {
   source           = "terraform-aws-modules/eks/aws"
   version          = "21.3.1"
   name     = var.cluster_name
+  cluster_endpoint_private_access = true
+  cluster_endpoint_public_access  = true
   kubernetes_version  = var.cluster_version
   subnet_ids       = module.vpc.private_subnets
   vpc_id           = module.vpc.vpc_id
@@ -58,6 +60,7 @@ module "eks" {
           value               = "service"
         }
         cpu_credits           = "unlimited"
+        subnet_ids       = module.vpc.private_subnets
     },
     compute = {
         name                    = "compute"
@@ -76,6 +79,7 @@ module "eks" {
           value               = "compute"
         }
         max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs
+        subnet_ids       = module.vpc.private_subnets
     },
     big_compute = {
         name                    = "big-compute"
@@ -90,6 +94,7 @@ module "eks" {
           value               = "compute"
         }
         max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
+        subnet_ids       = module.vpc.private_subnets
     }
   }
 }
