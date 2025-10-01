@@ -36,11 +36,16 @@ module "eks" {
   kubernetes_version  = var.cluster_version
   subnet_ids       = module.vpc.private_subnets
   vpc_id           = module.vpc.vpc_id
+
+
   iam_role_path    = "/${local.instance}/"
 
   enable_irsa                   = true # Outputs oidc_provider_arn
   create_security_group = true
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+
+  endpoint_public_access  = true
+  endpoint_private_access = true
 
   eks_managed_node_groups = {
     services = {
@@ -58,7 +63,6 @@ module "eks" {
           value               = "service"
         }
         cpu_credits           = "unlimited"
-        subnet_ids       = module.vpc.private_subnets
     },
     compute = {
         name                    = "compute"
@@ -77,7 +81,6 @@ module "eks" {
           value               = "compute"
         }
         max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs
-        subnet_ids       = module.vpc.private_subnets
     },
     big_compute = {
         name                    = "big-compute"
@@ -92,7 +95,6 @@ module "eks" {
           value               = "compute"
         }
         max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
-        subnet_ids       = module.vpc.private_subnets
     }
   }
 }
