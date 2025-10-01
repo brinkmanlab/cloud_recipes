@@ -40,7 +40,7 @@ module "eks" {
 
   iam_role_path    = "/${local.instance}/"
 
-  enable_irsa                   = true # Outputs oidc_provider_arn
+  enable_irsa           = true # Outputs oidc_provider_arn
   create_security_group = true
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
@@ -99,28 +99,11 @@ module "eks" {
   }
 }
 
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_name
+# Optional: expose cluster info for add-ons
+output "cluster_name" {
+  value = module.eks.cluster_name
 }
 
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_name
-}
-
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-}
-
-module "alb_ingress_controller" {
-  depends_on = [module.eks.cluster_name]
-  source  = "iplabs/alb-ingress-controller/kubernetes"
-  version = "3.4.0"
-
-  k8s_cluster_type = "eks"
-  k8s_namespace    = "kube-system"
-
-  aws_region_name  = data.aws_region.current.name
-  k8s_cluster_name = data.aws_eks_cluster.cluster.name
+output "cluster_oidc_provider_arn" {
+  value = module.eks.oidc_provider_arn
 }
