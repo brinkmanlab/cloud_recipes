@@ -39,6 +39,7 @@ module "eks" {
   subnet_ids       = module.vpc.private_subnets
   vpc_id           = module.vpc.vpc_id
   iam_role_path    = "/${local.instance}/"
+  enable_cluster_creator_admin_permissions = true
 
   enable_irsa           = true # Outputs oidc_provider_arn
   create_security_group = false
@@ -58,6 +59,18 @@ provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
   token                  = data.aws_eks_cluster_auth.cluster.token
+}
+
+module "eks_aws_auth" {
+  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
+  version = "~> 20.0"
+  aws_auth_roles = [
+    {
+      rolearn  = "arn:aws:iam::038742985322:user/terraform"
+      username = "terraform"
+      groups   = ["system:masters"]
+    }
+  ]
 }
 
 module "alb_ingress_controller" {
