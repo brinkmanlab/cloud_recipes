@@ -44,24 +44,6 @@ module "eks" {
   create_security_group = true
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-  eks_managed_node_groups = {
-    services = {
-        name                 = "services"
-        instance_types        = local.instance_types
-        min_size             = 1
-        desired_size         = 1
-        max_size             = var.service_worker_max
-
-        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=service --v=${var.kubelet_verbosity}' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
-
-        tags = {
-          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
-          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
-          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "service"
-        }
-        cpu_credits           = "unlimited"
-    },
-  }
 }
 
 data "aws_eks_cluster" "cluster" {
