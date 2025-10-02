@@ -33,24 +33,21 @@ module "eks" {
   source           = "terraform-aws-modules/eks/aws"
   version          = "21.3.1"
   name     = var.cluster_name
+  endpoint_private_access = true
+  endpoint_public_access  = true
   kubernetes_version  = var.cluster_version
   subnet_ids       = module.vpc.private_subnets
   vpc_id           = module.vpc.vpc_id
-
-
   iam_role_path    = "/${local.instance}/"
 
   enable_irsa           = true # Outputs oidc_provider_arn
   create_security_group = true
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-  endpoint_public_access  = true
-  endpoint_private_access = true
-
   eks_managed_node_groups = {
     services = {
         name                 = "services"
-        instance_type        = "t3.xlarge"
+        instance_types        = local.instance_types
         min_size             = 1
         desired_size         = 1
         max_size             = var.service_worker_max
@@ -58,52 +55,37 @@ module "eks" {
         bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=service --v=${var.kubelet_verbosity}' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
 
         tags = {
-          key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
-          propagate_at_launch = "true"
-          value               = "service"
+          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
+          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "service"
         }
         cpu_credits           = "unlimited"
     },
-    compute = {
-        name                    = "compute"
-
-        instance_types = local.instance_types
-
-        min_size            = 0
-        max_size            = 30
-        desired_capacity    = 1
-
-        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
-
-        tags = {
-          key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
-          propagate_at_launch = "true"
-          value               = "compute"
-        }
-        max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs
-    },
-    big_compute = {
-        name                    = "big-compute"
-        instance_types = local.large_instance_types
-        min_size            = 0
-        max_size            = 30
-        desired_capacity    = 1
-        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
-        tags = {
-          key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
-          propagate_at_launch = "true"
-          value               = "compute"
-        }
-        max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
-    }
   }
 }
 
-# Optional: expose cluster info for add-ons
-output "cluster_name" {
-  value = module.eks.cluster_name
+data "aws_eks_cluster" "cluster" {
+  name = module.eks.cluster_name
 }
 
-output "cluster_oidc_provider_arn" {
-  value = module.eks.oidc_provider_arn
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_name
+}
+
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+}
+
+module "alb_ingress_controller" {
+  depends_on = [module.eks.cluster_name]
+  source  = "iplabs/alb-ingress-controller/kubernetes"
+  version = "3.4.0"
+
+  k8s_cluster_type = "eks"
+  k8s_namespace    = "kube-system"
+
+  aws_region_name  = data.aws_region.current.name
+  k8s_cluster_name = data.aws_eks_cluster.cluster.name
 }
