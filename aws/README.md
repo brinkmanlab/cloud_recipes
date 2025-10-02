@@ -42,7 +42,6 @@ See the [provided example](/examples/aws/) for a demonstration of this modules u
 |------|--------|---------|
 | <a name="module_alb_ingress_controller"></a> [alb\_ingress\_controller](#module\_alb\_ingress\_controller) | iplabs/alb-ingress-controller/kubernetes | 3.4.0 |
 | <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | 21.3.1 |
-| <a name="module_eks_aws_auth"></a> [eks\_aws\_auth](#module\_eks\_aws\_auth) | terraform-aws-modules/eks/aws//modules/aws-auth | ~> 20.0 |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | n/a |
 
 ## Inputs
