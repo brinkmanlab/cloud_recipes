@@ -42,7 +42,7 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   enable_irsa           = true # Outputs oidc_provider_arn
-  create_security_group = false
+  create_security_group = true
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
    eks_managed_node_groups = {
@@ -52,8 +52,9 @@ module "eks" {
         min_size             = 1
         desired_size         = 1
         max_size             = var.service_worker_max
+        iam_role_arn = aws_iam_role.eks_nodegroup.arn
 
-        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=service --v=${var.kubelet_verbosity}' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+        bootstrap_extra_args = "--kubelet-extra-args --node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
 
         tags = {
           "k8s.io/cluster-autoscaler/enabled"                                 = "true"
@@ -69,9 +70,10 @@ module "eks" {
 
         min_size            = 0
         max_size            = 30
-        desired_capacity    = 1
+        desired_size    = 1
+        iam_role_arn = aws_iam_role.eks_nodegroup.arn
 
-        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
+        bootstrap_extra_args = "--kubelet-extra-args --node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
 
         tags = {
           "k8s.io/cluster-autoscaler/enabled"                                 = "true"
@@ -85,8 +87,9 @@ module "eks" {
         instance_types = local.large_instance_types
         min_size            = 0
         max_size            = 30
-        desired_capacity    = 1
-        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
+        desired_size    = 1
+        iam_role_arn = aws_iam_role.eks_nodegroup.arn
+        bootstrap_extra_args = "--kubelet-extra-args --node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot"
         tags = {
           "k8s.io/cluster-autoscaler/enabled"                                 = "true"
           "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
@@ -111,6 +114,45 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
   token                  = data.aws_eks_cluster_auth.cluster.token
 }
+
+
+# IAM role for EKS Node Groups
+resource "aws_iam_role" "eks_nodegroup" {
+  name = "${var.cluster_name}-nodegroup-role"
+
+  assume_role_policy = data.aws_iam_policy_document.eks_node_assume_role.json
+}
+
+data "aws_iam_policy_document" "eks_node_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+# Attach required managed IAM policies
+resource "aws_iam_role_policy_attachment" "worker_node_policy" {
+  role       = aws_iam_role.eks_nodegroup.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "cni_policy" {
+  role       = aws_iam_role.eks_nodegroup.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+}
+
+resource "aws_iam_role_policy_attachment" "ecr_policy" {
+  role       = aws_iam_role.eks_nodegroup.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+
 
 module "eks_aws_auth" {
   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
