@@ -66,8 +66,8 @@ module "eks_aws_auth" {
   version = "~> 20.0"
   aws_auth_roles = [
     {
-      rolearn  = "arn:aws:iam::038742985322:user/terraform"
-      username = "terraform"
+      rolearn  = "arn:aws:iam::038742985322:user/jmcook"
+      username = "jmcook"
       groups   = ["system:masters"]
     }
   ]
