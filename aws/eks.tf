@@ -44,6 +44,16 @@ module "eks" {
   create_security_group = false
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
+  manage_aws_auth_configmap = true
+  aws_auth_roles = [
+    {
+      rolearn  = "arn:aws:iam::038742985322:user/terraform"
+      username = "terraform"
+      groups   = ["system:masters"]
+    }
+  ]
+
+
 }
 
 data "aws_eks_cluster" "cluster" {
