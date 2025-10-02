@@ -44,16 +44,6 @@ module "eks" {
   create_security_group = false
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-  manage_aws_auth_configmap = true
-  aws_auth_roles = [
-    {
-      rolearn  = "arn:aws:iam::038742985322:user/terraform"
-      username = "terraform"
-      groups   = ["system:masters"]
-    }
-  ]
-
-
 }
 
 data "aws_eks_cluster" "cluster" {
@@ -68,6 +58,18 @@ provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
   token                  = data.aws_eks_cluster_auth.cluster.token
+}
+
+module "eks_aws_auth" {
+  source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
+  version = "~> 20.0"
+  aws_auth_roles = [
+    {
+      rolearn  = "arn:aws:iam::038742985322:user/terraform"
+      username = "terraform"
+      groups   = ["system:masters"]
+    }
+  ]
 }
 
 module "alb_ingress_controller" {
