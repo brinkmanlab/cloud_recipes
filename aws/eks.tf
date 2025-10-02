@@ -32,7 +32,7 @@ locals {
 module "eks" {
   source           = "terraform-aws-modules/eks/aws"
   version          = "21.3.1"
-  name     = var.cluster_name
+  name             = var.cluster_name
   endpoint_private_access = true
   endpoint_public_access  = true
   kubernetes_version  = var.cluster_version
@@ -41,7 +41,7 @@ module "eks" {
   iam_role_path    = "/${local.instance}/"
 
   enable_irsa           = true # Outputs oidc_provider_arn
-  create_security_group = true
+  create_security_group = false
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
 }
