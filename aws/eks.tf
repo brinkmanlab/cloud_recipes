@@ -34,7 +34,7 @@ module "eks" {
   version          = "21.3.1"
   name             = var.cluster_name
   endpoint_private_access = true
-  endpoint_public_access  = false
+  endpoint_public_access  = true
   kubernetes_version  = var.cluster_version
   subnet_ids       = module.vpc.private_subnets
   vpc_id           = module.vpc.vpc_id
