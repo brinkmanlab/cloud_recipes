@@ -56,9 +56,9 @@ module "eks" {
         bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=service --v=${var.kubelet_verbosity}' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
 
         tags = {
-          key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
-          propagate_at_launch = "true"
-          value               = "service"
+          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
+          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "service"
         }
         cpu_credits           = "unlimited"
     },
@@ -74,9 +74,9 @@ module "eks" {
         bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
 
         tags = {
-          key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
-          propagate_at_launch = "true"
-          value               = "compute"
+          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
+          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "compute"
         }
         max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs
     },
@@ -88,9 +88,9 @@ module "eks" {
         desired_capacity    = 1
         bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
         tags = {
-          key                 = "k8s.io/cluster-autoscaler/node-template/label/WorkClass"
-          propagate_at_launch = "true"
-          value               = "compute"
+          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
+          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "compute"
         }
         max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
     }
