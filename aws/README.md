@@ -35,7 +35,6 @@ See the [provided example](/examples/aws/) for a demonstration of this modules u
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | n/a |
-| <a name="provider_null"></a> [null](#provider\_null) | n/a |
 
 ## Modules
 
@@ -71,8 +70,6 @@ See the [provided example](/examples/aws/) for a demonstration of this modules u
 
 | Name | Description |
 |------|-------------|
-| <a name="output_cluster_name"></a> [cluster\_name](#output\_cluster\_name) | Optional: expose cluster info for add-ons |
-| <a name="output_cluster_oidc_provider_arn"></a> [cluster\_oidc\_provider\_arn](#output\_cluster\_oidc\_provider\_arn) | n/a |
 | <a name="output_eks"></a> [eks](#output\_eks) | EKS submodule output |
 | <a name="output_local_zone"></a> [local\_zone](#output\_local\_zone) | '*.local' DNS zone |
 | <a name="output_vpc"></a> [vpc](#output\_vpc) | VPC submodule output |
@@ -126,7 +123,6 @@ See the [provided example](/examples/aws/) for a demonstration of this modules u
 | [kubernetes_service_account.docker_cache](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
 | [kubernetes_service_account.kube_dashboard](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
 | [kubernetes_service_account.metrics](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/service_account) | resource |
-| [null_resource.wait_for_nodes](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_eks_cluster.cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster) | data source |
