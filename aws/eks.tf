@@ -45,6 +45,57 @@ module "eks" {
   create_security_group = false
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
+   eks_managed_node_groups = {
+    services = {
+        name                 = "services"
+        instance_type        = "t3.xlarge"
+        min_size             = 1
+        desired_size         = 1
+        max_size             = var.service_worker_max
+
+        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=service --v=${var.kubelet_verbosity}' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+
+        tags = {
+          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
+          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "service"
+        }
+        cpu_credits           = "unlimited"
+    },
+    compute = {
+        name                    = "compute"
+
+        instance_types = local.instance_types
+
+        min_size            = 0
+        max_size            = 30
+        desired_capacity    = 1
+
+        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
+
+        tags = {
+          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
+          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "compute"
+        }
+        max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs
+    },
+    big_compute = {
+        name                    = "big-compute"
+        instance_types = local.large_instance_types
+        min_size            = 0
+        max_size            = 30
+        desired_capacity    = 1
+        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot' --docker-config-json '${local.docker_json}'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
+        tags = {
+          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
+          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "compute"
+        }
+        max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
+    }
+  }
+
 }
 
 data "aws_eks_cluster" "cluster" {
