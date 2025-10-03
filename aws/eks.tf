@@ -82,21 +82,6 @@ module "eks" {
         }
         max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs
     },
-    big_compute = {
-        name                    = "big-compute"
-        instance_types = local.large_instance_types
-        min_size            = 0
-        max_size            = 30
-        desired_size    = 1
-        iam_role_arn = aws_iam_role.eks_nodegroup.arn
-        bootstrap_extra_args = "--kubelet-extra-args --node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot"
-        tags = {
-          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
-          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
-          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "compute"
-        }
-        max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
-    }
   }
 
 }
