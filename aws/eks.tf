@@ -86,7 +86,7 @@ module "eks" {
 
 }
 
-#ata "aws_eks_cluster" "cluster" {
+#data "aws_eks_cluster" "cluster" {
 #  name = module.eks.cluster_name
 #}
 
@@ -160,5 +160,5 @@ module "alb_ingress_controller" {
   k8s_namespace    = "kube-system"
 
   aws_region_name  = data.aws_region.current.name
-  k8s_cluster_name = data.aws_eks_cluster.cluster.name
+  k8s_cluster_name = module.eks.cluster_name
 }
