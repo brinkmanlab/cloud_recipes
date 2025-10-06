@@ -61,7 +61,14 @@ module "eks" {
           "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
           "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "service"
         }
-        cpu_credits           = "unlimited"
+        cpu_credits           = "unlimited",
+        iam_role_additional_policies = {
+          AmazonEKSWorkerNodePolicy         = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+          AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+          AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        }
+
+
     },
     compute = {
         name                    = "compute"
@@ -74,31 +81,39 @@ module "eks" {
         iam_role_arn = aws_iam_role.eks_nodegroup.arn
 
         bootstrap_extra_args = "--kubelet-extra-args --node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
+        ## What else used to be here?
+        ## How are these tags the same as the concat way?
+
 
         tags = {
           "k8s.io/cluster-autoscaler/enabled"                                 = "true"
           "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
           "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "compute"
         }
-        max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs
+        max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs,
+        iam_role_additional_policies = {
+          AmazonEKSWorkerNodePolicy         = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+          AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+          AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        }
     },
   }
 
 }
 
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_name
-}
+#data "aws_eks_cluster" "cluster" {
+#  name = module.eks.cluster_name
+#}
 
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_name
-}
+#data "aws_eks_cluster_auth" "cluster" {
+#  name = module.eks.cluster_name
+#}
 
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-}
+#provider "kubernetes" {
+#  host                   = data.aws_eks_cluster.cluster.endpoint
+#  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+#  token                  = data.aws_eks_cluster_auth.cluster.token
+#}
 
 
 # IAM role for EKS Node Groups
@@ -160,5 +175,5 @@ module "alb_ingress_controller" {
   k8s_namespace    = "kube-system"
 
   aws_region_name  = data.aws_region.current.name
-  k8s_cluster_name = data.aws_eks_cluster.cluster.name
+  k8s_cluster_name = module.eks.cluster_name
 }
