@@ -29,6 +29,23 @@ locals {
   })
 }
 
+# Retrieve the latest recommended EKS optimized AMI for 1.33
+data "aws_ssm_parameter" "eks_ami_1_33_al2023" {
+  name = "/aws/service/eks/optimized-ami/1.33/amazon-linux-2023/x86_64/standard/recommended/image_id"
+}
+
+# Launch Template for EKS node groups
+resource "aws_launch_template" "eks_nodes" {
+  name_prefix   = "${var.cluster_name}-lt-"
+  image_id      = data.aws_ssm_parameter.eks_ami_1_33_al2023.value
+  instance_type = "t3.large"
+
+  metadata_options {
+    http_tokens                 = "optional"
+    http_put_response_hop_limit = 1
+  }
+}
+
 module "eks" {
   source           = "terraform-aws-modules/eks/aws"
   version          = "21.3.1"
@@ -64,10 +81,16 @@ module "eks" {
           "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "service"
         }
         cpu_credits           = "unlimited",
+
+        launch_template = {
+          id      = aws_launch_template.eks_nodes.id
+          version = "$Latest"
+        }
         iam_role_additional_policies = {
           AmazonEKSWorkerNodePolicy         = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
           AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
           AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+          AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
         }
 
 
@@ -93,10 +116,16 @@ module "eks" {
           "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "compute"
         }
         max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs,
+
+        launch_template = {
+          id      = aws_launch_template.eks_nodes.id
+          version = "$Latest"
+        }
         iam_role_additional_policies = {
           AmazonEKSWorkerNodePolicy         = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
           AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
           AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+          AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
         }
     },
   }
