@@ -36,7 +36,7 @@ module "eks" {
   endpoint_private_access = true
   endpoint_public_access  = true
   kubernetes_version  = var.cluster_version
-  subnet_ids       = module.vpc.private_subnets
+  subnet_ids       = module.vpc.public_subnets
   vpc_id           = module.vpc.vpc_id
   iam_role_path    = "/${local.instance}/"
   enable_cluster_creator_admin_permissions = true
@@ -54,7 +54,7 @@ module "eks" {
         desired_size         = 1
         max_size             = var.service_worker_max
         iam_role_arn = aws_iam_role.eks_nodegroup.arn
-        subnet_ids       = module.vpc.private_subnets
+        subnet_ids       = module.vpc.public_subnets
 
         bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
 
