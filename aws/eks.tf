@@ -49,7 +49,7 @@ module "eks" {
     services = {
         name                 = "services"
         instance_type        = "t3.xlarge"
-        ami_type             = "AL2_x86_64"
+        ami_type             = "AL2023_x86_64_STANDARD"
         min_size             = 1
         desired_size         = 1
         max_size             = var.service_worker_max
@@ -74,7 +74,7 @@ module "eks" {
     compute = {
         name                = "compute"
         instance_types      = local.instance_types
-        ami_type            = "AL2_x86_64"
+        ami_type            = "AL2023_x86_64_STANDARD"
         min_size            = 0
         max_size            = 30
         desired_size    = 1
