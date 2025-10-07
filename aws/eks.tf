@@ -49,12 +49,13 @@ module "eks" {
     services = {
         name                 = "services"
         instance_type        = "t3.xlarge"
+        ami_type             = "AL2_x86_64"
         min_size             = 1
         desired_size         = 1
         max_size             = var.service_worker_max
         iam_role_arn = aws_iam_role.eks_nodegroup.arn
 
-        bootstrap_extra_args = "--kubelet-extra-args --node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
 
         tags = {
           "k8s.io/cluster-autoscaler/enabled"                                 = "true"
@@ -71,17 +72,16 @@ module "eks" {
 
     },
     compute = {
-        name                    = "compute"
-
-        instance_types = local.instance_types
-
+        name                = "compute"
+        instance_types      = local.instance_types
+        ami_type            = "AL2_x86_64"
         min_size            = 0
         max_size            = 30
         desired_size    = 1
         iam_role_arn = aws_iam_role.eks_nodegroup.arn
 
-        bootstrap_extra_args = "--kubelet-extra-args --node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
-        ## What else used to be here?
+        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
+        ## What else used to be in here that was moved to bootstrap_extra_args and then removed?
         ## How are these tags the same as the concat way?
 
 
