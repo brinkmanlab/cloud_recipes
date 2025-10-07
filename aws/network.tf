@@ -20,6 +20,8 @@ module "vpc" { # https://github.com/terraform-aws-modules/terraform-aws-vpc/
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
   }
 
+  map_public_ip_on_launch = true
+
   database_subnets = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
   database_subnet_tags = {
     "kubernetes.io/role/internal-elb"             = 1
