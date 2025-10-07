@@ -80,7 +80,7 @@ module "eks" {
         max_size            = 30
         desired_size    = 1
         iam_role_arn = aws_iam_role.eks_nodegroup.arn
-        subnet_ids       = module.vpc.private_subnets
+        subnet_ids       = module.vpc.public_subnets
 
         bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
         ## What else used to be in here that was moved to bootstrap_extra_args and then removed?
