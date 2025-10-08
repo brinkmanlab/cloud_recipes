@@ -66,12 +66,21 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   enable_irsa           = true # Outputs oidc_provider_arn
+
   security_group_additional_rules = {
     ingress_nodes_ephemeral_ports_tcp = {
       description                = "Nodes on ephemeral ports"
       protocol                   = "tcp"
       from_port                  = 1025
       to_port                    = 65535
+      type                       = "ingress"
+      source_node_security_group = true
+    }
+    ingress_nodes_443 = {
+      description                = "Nodes to cluster API"
+      protocol                   = "tcp"
+      from_port                  = 443
+      to_port                    = 443
       type                       = "ingress"
       source_node_security_group = true
     }
@@ -89,6 +98,18 @@ module "eks" {
   }
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
+  addons = {
+    vpc-cni = {
+      most_recent = true
+    }
+    coredns = {
+      most_recent = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+  }
+
    eks_managed_node_groups = {
     services = {
         name                 = "services"
@@ -100,6 +121,7 @@ module "eks" {
         subnet_ids = module.vpc.private_subnets
 
         iam_role_attach_cni_policy = true
+        use_custom_launch_template = false
 
         cloudinit_pre_nodeadm = [
           {
@@ -118,10 +140,7 @@ module "eks" {
         ]
         labels = {
           WorkClass = "service"
-          "node.kubernetes.io/lifecycle" = "spot"
         }
-
-        #bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
 
         tags = {
           "k8s.io/cluster-autoscaler/enabled"                                 = "true"
