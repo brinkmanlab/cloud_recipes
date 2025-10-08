@@ -115,9 +115,11 @@ module "eks" {
         name                 = "services"
         instance_types        = ["t3.xlarge"]
         ami_type             = "AL2023_x86_64_STANDARD"
+
         min_size             = 1
         desired_size         = 1
         max_size             = var.service_worker_max
+
         subnet_ids = module.vpc.private_subnets
 
         iam_role_attach_cni_policy = true
@@ -134,18 +136,19 @@ module "eks" {
                   config:
                     maxPods: 110
                   flags:
-                    - --node-labels=WorkClass=service,node.kubernetes.io/lifecycle=spot
+                    - --node-labels=WorkClass=services,node.kubernetes.io/lifecycle=spot
             EOT
           }
         ]
         labels = {
-          WorkClass = "service"
+          WorkClass                      = "services"
+          "node.kubernetes.io/lifecycle" = "spot"
         }
 
         tags = {
           "k8s.io/cluster-autoscaler/enabled"                                 = "true"
           "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
-          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "service"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "services"
         }
 
         block_device_mappings = {
@@ -160,17 +163,126 @@ module "eks" {
           }
         }
 
-        #cpu_credits           = "unlimited",
+      iam_role_additional_policies = {
+        AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      }
 
-      launch_template_name   = aws_launch_template.eks_nodes.name
-      launch_template_version = "$Latest"
+      cpu_credits                  = "unlimited"
+    },
+    compute = {
+        name                = "compute"
+        instance_types      = local.instance_types
+        ami_type            = "AL2023_x86_64_STANDARD"
+
+        min_size            = 0
+        max_size            = 30
+        desired_size        = 1
+
+        subnet_ids          = module.vpc.private_subnets
+
+        iam_role_attach_cni_policy = true
+        use_custom_launch_template = false
+
+        cloudinit_pre_nodeadm = [
+          {
+            content_type = "application/node.eks.aws"
+            content      = <<-EOT
+              apiVersion: node.eks.aws/v1alpha1
+              kind: NodeConfig
+              spec:
+                kubelet:
+                  config:
+                    maxPods: 110
+                  flags:
+                    - --node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot
+            EOT
+          }
+        ]
+        labels = {
+          WorkClass                      = "compute"
+          "node.kubernetes.io/lifecycle" = "spot"
+        }
+
+        tags = {
+          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
+          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "compute"
+        }
+
+        block_device_mappings = {
+          xvda = {
+            device_name = "/dev/xvda"
+            ebs = {
+              volume_size           = 100
+              volume_type           = "gp3"
+              encrypted             = true
+              delete_on_termination = true
+            }
+          }
+        }
+
+        max_instance_lifetime        = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs,
 
         iam_role_additional_policies = {
           AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
         }
-
-
     },
+    big_compute = {
+        name                       = "big-compute"
+        instance_types             = local.large_instance_types
+        ami_type                   = "AL2023_x86_64_STANDARD"
+
+        min_size                   = 0
+        max_size                   = 30
+        desired_size               = 1
+
+        subnet_ids                 = module.vpc.private_subnets
+
+        iam_role_attach_cni_policy = true
+        use_custom_launch_template = false
+
+        cloudinit_pre_nodeadm = [
+          {
+            content_type = "application/node.eks.aws"
+            content      = <<-EOT
+              apiVersion: node.eks.aws/v1alpha1
+              kind: NodeConfig
+              spec:
+                kubelet:
+                  config:
+                    maxPods: 110
+                  flags:
+                    - --node-labels=WorkClass=big_compute,node.kubernetes.io/lifecycle=spot
+            EOT
+          }
+        ]
+
+        labels = {
+          WorkClass                      = "big_compute"
+          "node.kubernetes.io/lifecycle" = "spot"
+        }
+
+        tags = {
+          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
+          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "big_compute"
+        }
+        block_device_mappings = {
+          xvda = {
+            device_name = "/dev/xvda"
+            ebs = {
+              volume_size           = 100
+              volume_type           = "gp3"
+              encrypted             = true
+              delete_on_termination = true
+            }
+          }
+        }
+        max_instance_lifetime = var.max_worker_lifetime                       # Minimum time allowed by AWS, 168hrs
+        iam_role_additional_policies = {
+          AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        }
+    }
   }
 
 }
