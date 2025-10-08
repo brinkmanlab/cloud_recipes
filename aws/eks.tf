@@ -38,11 +38,18 @@ data "aws_ssm_parameter" "eks_ami_1_33_al2023" {
 resource "aws_launch_template" "eks_nodes" {
   name_prefix   = "${var.cluster_name}-lt-"
   image_id      = data.aws_ssm_parameter.eks_ami_1_33_al2023.value
-  instance_type = "t3.large"
 
   metadata_options {
-    http_tokens                 = "optional"
-    http_put_response_hop_limit = 1
+    http_tokens                 = "required"  # Use IMDSv2
+    http_put_response_hop_limit = 2           # Increase for EKS
+    instance_metadata_tags      = "enabled"
+  }
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = "${var.cluster_name}-node"
+    }
   }
 }
 
@@ -53,80 +60,106 @@ module "eks" {
   endpoint_private_access = true
   endpoint_public_access  = true
   kubernetes_version  = var.cluster_version
-  subnet_ids       = module.vpc.public_subnets
+  subnet_ids       = concat(module.vpc.private_subnets, module.vpc.public_subnets)
   vpc_id           = module.vpc.vpc_id
   iam_role_path    = "/${local.instance}/"
   enable_cluster_creator_admin_permissions = true
 
   enable_irsa           = true # Outputs oidc_provider_arn
-  create_security_group = true
+  security_group_additional_rules = {
+    ingress_nodes_ephemeral_ports_tcp = {
+      description                = "Nodes on ephemeral ports"
+      protocol                   = "tcp"
+      from_port                  = 1025
+      to_port                    = 65535
+      type                       = "ingress"
+      source_node_security_group = true
+    }
+  }
+  # Node security group
+  node_security_group_additional_rules = {
+    ingress_self_all = {
+      description = "Node to node all ports/protocols"
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
+      type        = "ingress"
+      self        = true
+    }
+    egress_all = {
+      description      = "Node all egress"
+      protocol         = "-1"
+      from_port        = 0
+      to_port          = 0
+      type             = "egress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+  }
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
    eks_managed_node_groups = {
     services = {
         name                 = "services"
-        instance_type        = "t3.xlarge"
-        ami_type             = "AL2023_x86_64_STANDARD"
+        instance_types        = ["t3.xlarge"]
+        ami_type             = "AL2023_X86_64_STANDARD"
         min_size             = 1
         desired_size         = 1
         max_size             = var.service_worker_max
-        iam_role_arn = aws_iam_role.eks_nodegroup.arn
-        subnet_ids       = module.vpc.public_subnets
+        subnet_ids = module.vpc.private_subnets
 
-        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
+        iam_role_attach_cni_policy = true
+
+        cloudinit_pre_nodeadm = [
+          {
+            content_type = "application/node.eks.aws"
+            content      = <<-EOT
+              apiVersion: node.eks.aws/v1alpha1
+              kind: NodeConfig
+              spec:
+                kubelet:
+                  config:
+                    maxPods: 110
+                  flags:
+                    - --node-labels=WorkClass=service,node.kubernetes.io/lifecycle=spot
+            EOT
+          }
+        ]
+        labels = {
+          WorkClass = "service"
+          "node.kubernetes.io/lifecycle" = "spot"
+        }
+
+        #bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25
 
         tags = {
           "k8s.io/cluster-autoscaler/enabled"                                 = "true"
           "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
           "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "service"
         }
-        cpu_credits           = "unlimited",
 
-        launch_template = {
-          id      = aws_launch_template.eks_nodes.id
-          version = "$Latest"
+        block_device_mappings = {
+          xvda = {
+            device_name = "/dev/xvda"
+            ebs = {
+              volume_size           = 100
+              volume_type           = "gp3"
+              encrypted             = true
+              delete_on_termination = true
+            }
+          }
         }
+
+        #cpu_credits           = "unlimited",
+
+      launch_template_name   = aws_launch_template.eks_nodes.name
+      launch_template_version = "$Latest"
+
         iam_role_additional_policies = {
-          AmazonEKSWorkerNodePolicy         = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-          AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-          AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
           AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
         }
 
 
-    },
-    compute = {
-        name                = "compute"
-        instance_types      = local.instance_types
-        ami_type            = "AL2023_x86_64_STANDARD"
-        min_size            = 0
-        max_size            = 30
-        desired_size    = 1
-        iam_role_arn = aws_iam_role.eks_nodegroup.arn
-        subnet_ids       = module.vpc.public_subnets
-
-        bootstrap_extra_args = "--kubelet-extra-args '--node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot'" # https://github.com/awslabs/amazon-eks-ami/blob/07dd954f09084c46d8c570f010c529ea1ad48027/files/bootstrap.sh#L25"
-        ## What else used to be in here that was moved to bootstrap_extra_args and then removed?
-        ## How are these tags the same as the concat way?
-
-
-        tags = {
-          "k8s.io/cluster-autoscaler/enabled"                                 = "true"
-          "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
-          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "compute"
-        }
-        max_instance_lifetime = var.max_worker_lifetime # Minimum time allowed by AWS, 168hrs,
-
-        launch_template = {
-          id      = aws_launch_template.eks_nodes.id
-          version = "$Latest"
-        }
-        iam_role_additional_policies = {
-          AmazonEKSWorkerNodePolicy         = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-          AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-          AmazonEKS_CNI_Policy               = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-          AmazonSSMManagedInstanceCore       = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-        }
     },
   }
 
@@ -148,11 +181,10 @@ provider "kubernetes" {
 
 
 # IAM role for EKS Node Groups
-resource "aws_iam_role" "eks_nodegroup" {
-  name = "${var.cluster_name}-nodegroup-role"
-
-  assume_role_policy = data.aws_iam_policy_document.eks_node_assume_role.json
-}
+#resource "aws_iam_role" "eks_nodegroup" {
+#  name = "${var.cluster_name}-nodegroup-role"
+#  assume_role_policy = data.aws_iam_policy_document.eks_node_assume_role.json
+#}
 
 data "aws_iam_policy_document" "eks_node_assume_role" {
   statement {
@@ -168,29 +200,30 @@ data "aws_iam_policy_document" "eks_node_assume_role" {
 }
 
 # Attach required managed IAM policies
-resource "aws_iam_role_policy_attachment" "worker_node_policy" {
-  role       = aws_iam_role.eks_nodegroup.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-}
+#resource "aws_iam_role_policy_attachment" "worker_node_policy" {
+#  role       = aws_iam_role.eks_nodegroup.name
+#  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+#}
 
-resource "aws_iam_role_policy_attachment" "cni_policy" {
-  role       = aws_iam_role.eks_nodegroup.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-}
+#resource "aws_iam_role_policy_attachment" "cni_policy" {
+#  role       = aws_iam_role.eks_nodegroup.name
+#  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+#}
 
-resource "aws_iam_role_policy_attachment" "ecr_policy" {
-  role       = aws_iam_role.eks_nodegroup.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-}
+#resource "aws_iam_role_policy_attachment" "ecr_policy" {
+#  role       = aws_iam_role.eks_nodegroup.name
+#  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+#}
 
 
 
 module "eks_aws_auth" {
   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
   version = "~> 20.0"
-  aws_auth_roles = [
+  manage_aws_auth_configmap = true
+  aws_auth_users = [
     {
-      rolearn  = "arn:aws:iam::038742985322:user/jmcook"
+      userarn  = "arn:aws:iam::038742985322:user/jmcook"
       username = "jmcook"
       groups   = ["system:masters"]
     }
