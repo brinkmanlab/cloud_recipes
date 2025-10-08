@@ -102,7 +102,7 @@ module "eks" {
     services = {
         name                 = "services"
         instance_types        = ["t3.xlarge"]
-        ami_type             = "AL2023_X86_64_STANDARD"
+        ami_type             = "AL2023_x86_64_STANDARD"
         min_size             = 1
         desired_size         = 1
         max_size             = var.service_worker_max
