@@ -34,25 +34,6 @@ data "aws_ssm_parameter" "eks_ami_1_33_al2023" {
   name = "/aws/service/eks/optimized-ami/1.33/amazon-linux-2023/x86_64/standard/recommended/image_id"
 }
 
-# Launch Template for EKS node groups
-resource "aws_launch_template" "eks_nodes" {
-  name_prefix   = "${var.cluster_name}-lt-"
-  image_id      = data.aws_ssm_parameter.eks_ami_1_33_al2023.value
-
-  metadata_options {
-    http_tokens                 = "required"  # Use IMDSv2
-    http_put_response_hop_limit = 2           # Increase for EKS
-    instance_metadata_tags      = "enabled"
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = {
-      Name = "${var.cluster_name}-node"
-    }
-  }
-}
-
 module "eks" {
   source           = "terraform-aws-modules/eks/aws"
   version          = "21.3.1"
