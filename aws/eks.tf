@@ -105,19 +105,19 @@ module "eks" {
                   config:
                     maxPods: 110
                   flags:
-                    - --node-labels=WorkClass=services,node.kubernetes.io/lifecycle=spot
+                    - --node-labels=WorkClass=service,node.kubernetes.io/lifecycle=spot
             EOT
           }
         ]
         labels = {
-          WorkClass                      = "services"
+          WorkClass                      = "service"
           "node.kubernetes.io/lifecycle" = "spot"
         }
 
         tags = {
           "k8s.io/cluster-autoscaler/enabled"                                 = "true"
           "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
-          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "services"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "service"
         }
 
         block_device_mappings = {
@@ -321,14 +321,14 @@ module "eks_aws_auth" {
   ]
 }
 
+
 module "alb_ingress_controller" {
   depends_on = [module.eks.cluster_name]
   source  = "iplabs/alb-ingress-controller/kubernetes"
   version = "3.4.0"
-
   k8s_cluster_type = "eks"
   k8s_namespace    = "kube-system"
-
   aws_region_name  = data.aws_region.current.name
   k8s_cluster_name = module.eks.cluster_name
-}
+} 
+
