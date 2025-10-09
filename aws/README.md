@@ -33,8 +33,8 @@ See the [provided example](/examples/aws/) for a demonstration of this modules u
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
-| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | n/a |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.15.0 |
+| <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | 2.38.0 |
 
 ## Modules
 
