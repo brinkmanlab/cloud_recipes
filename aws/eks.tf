@@ -79,6 +79,18 @@ module "eks" {
   }
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
+  addons = {
+    vpc-cni = {
+      most_recent = true
+    }
+    coredns = {
+      most_recent = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+  }
+
    eks_managed_node_groups = {
     services = {
         name                 = "services"
@@ -321,14 +333,4 @@ module "eks_aws_auth" {
   ]
 }
 
-
-module "alb_ingress_controller" {
-  depends_on = [module.eks.cluster_name]
-  source  = "iplabs/alb-ingress-controller/kubernetes"
-  version = "3.4.0"
-  k8s_cluster_type = "eks"
-  k8s_namespace    = "kube-system"
-  aws_region_name  = data.aws_region.current.name
-  k8s_cluster_name = module.eks.cluster_name
-} 
 

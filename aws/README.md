@@ -49,7 +49,7 @@ See the [provided example](/examples/aws/) for a demonstration of this modules u
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_autoscaler_version"></a> [autoscaler\_version](#input\_autoscaler\_version) | n/a | `string` | `"1.21.1"` | no |
+| <a name="input_autoscaler_version"></a> [autoscaler\_version](#input\_autoscaler\_version) | n/a | `string` | `"1.33.1"` | no |
 | <a name="input_cluster_name"></a> [cluster\_name](#input\_cluster\_name) | n/a | `string` | n/a | yes |
 | <a name="input_cluster_version"></a> [cluster\_version](#input\_cluster\_version) | Kubernetes cluster version | `string` | `"1.33"` | no |
 | <a name="input_dashboard_default_namespace"></a> [dashboard\_default\_namespace](#input\_dashboard\_default\_namespace) | The default namespace to show when logging into the dashboard | `string` | `"default"` | no |
