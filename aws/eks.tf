@@ -79,18 +79,6 @@ module "eks" {
   }
   enabled_log_types     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
-  addons = {
-    vpc-cni = {
-      most_recent = true
-    }
-    coredns = {
-      most_recent = true
-    }
-    kube-proxy = {
-      most_recent = true
-    }
-  }
-
    eks_managed_node_groups = {
     services = {
         name                 = "services"
