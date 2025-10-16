@@ -83,6 +83,7 @@ module "eks" {
     services = {
         name                 = "services"
         instance_types        = ["t3.xlarge"]
+        capacity_type       = "ON_DEMAND"
         ami_type             = "AL2023_x86_64_STANDARD"
 
         min_size             = 1
@@ -141,11 +142,12 @@ module "eks" {
     compute = {
         name                = "compute"
         instance_types      = local.instance_types
+        capacity_type       = "SPOT"
         ami_type            = "AL2023_x86_64_STANDARD"
 
         min_size            = 0
         max_size            = 30
-        desired_size        = 1
+        desired_size        = 0
 
         subnet_ids          = module.vpc.private_subnets
 
@@ -199,11 +201,12 @@ module "eks" {
     big_compute = {
         name                       = "big-compute"
         instance_types             = local.large_instance_types
+        capacity_type              = "SPOT"
         ami_type                   = "AL2023_x86_64_STANDARD"
 
         min_size                   = 0
         max_size                   = 30
-        desired_size               = 1
+        desired_size               = 0
 
         subnet_ids                 = module.vpc.private_subnets
 
