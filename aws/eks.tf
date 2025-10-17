@@ -1,37 +1,20 @@
 locals {
-  autoscaler_tag = [
-    {
-      key                 = "k8s.io/cluster-autoscaler/enabled"
-      propagate_at_launch = "false"
-      value               = "true"
-    },
-    {
-      key                 = "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}"
-      propagate_at_launch = "false"
-      value               = "true"
-    },
-  ]
-  network              = module.vpc.vpc_id
   instance_types       = ["c5.2xlarge", "c5.4xlarge", "c5.9xlarge", "c5d.2xlarge", "c5d.4xlarge", "c5a.2xlarge", "c5a.4xlarge", "c5a.8xlarge", "c4.2xlarge", "c4.4xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5d.2xlarge", "m5d.4xlarge", "m5d.8xlarge", "m5a.2xlarge", "m5a.4xlarge", "m4.2xlarge", "m4.4xlarge"]
   large_instance_types = ["c4.8xlarge", "c5.12xlarge", "c5.9xlarge", "c5a.12xlarge", "c5a.8xlarge", "c5d.12xlarge", "c5d.9xlarge", "c5n.9xlarge", "m5.12xlarge", "m5.8xlarge", "m5a.12xlarge", "m5a.8xlarge", "m5d.12xlarge", "m5d.8xlarge", "m5n.12xlarge", "m5n.8xlarge"]
 
-  docker_json = jsonencode({ # https://github.com/awslabs/amazon-eks-ami/blob/master/files/docker-daemon.json
-    "bridge" : "none",
-    "log-driver" : "json-file",
-    "log-opts" : {
-      "max-size" : "10m",
-      "max-file" : "10"
-    },
-    "live-restore" : true,
-    "max-concurrent-downloads" : 10
-    #"registry-mirrors" : ["http://${local.docker_cache_url}:5000"] # https://docs.docker.com/registry/recipes/mirror/#configure-the-cache
-    "insecure-registries" : values(var.docker_registry_proxies).*.hostname # https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
-  })
-}
-
-# Retrieve the latest recommended EKS optimized AMI for 1.33
-data "aws_ssm_parameter" "eks_ami_1_33_al2023" {
-  name = "/aws/service/eks/optimized-ami/1.33/amazon-linux-2023/x86_64/standard/recommended/image_id"
+  containerd_config = <<-EOT
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+        %{for registry in values(var.docker_registry_proxies)~}
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."${registry.hostname}"]
+          endpoint = ["http://${registry.hostname}"]
+        %{endfor~}
+      [plugins."io.containerd.grpc.v1.cri".registry.configs]
+        %{for registry in values(var.docker_registry_proxies)~}
+        [plugins."io.containerd.grpc.v1.cri".registry.configs."${registry.hostname}".tls]
+          insecure_skip_verify = true
+        %{endfor~}
+  EOT
 }
 
 module "eks" {
@@ -82,8 +65,8 @@ module "eks" {
    eks_managed_node_groups = {
     services = {
         name                 = "services"
-        instance_types        = ["t3.xlarge"]
-        capacity_type       = "ON_DEMAND"
+        instance_types       = ["t3.xlarge"]
+        capacity_type        = "ON_DEMAND"
         ami_type             = "AL2023_x86_64_STANDARD"
 
         min_size             = 1
@@ -106,13 +89,17 @@ module "eks" {
                   config:
                     maxPods: 110
                   flags:
-                    - --node-labels=WorkClass=service,node.kubernetes.io/lifecycle=spot
+                    - --node-labels=WorkClass=service,node.kubernetes.io/lifecycle=on-demand
+                    - --v=${var.kubelet_verbosity}
+                containerd:
+                  config: |
+                    ${indent(20, local.containerd_config)}
             EOT
           }
         ]
         labels = {
           WorkClass                      = "service"
-          "node.kubernetes.io/lifecycle" = "spot"
+          "node.kubernetes.io/lifecycle" = "on-demand"
         }
 
         tags = {
@@ -147,7 +134,7 @@ module "eks" {
 
         min_size            = 0
         max_size            = 30
-        desired_size        = 0
+        desired_size        = 1
 
         subnet_ids          = module.vpc.private_subnets
 
@@ -166,6 +153,10 @@ module "eks" {
                     maxPods: 110
                   flags:
                     - --node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot
+                    - --v=${var.kubelet_verbosity}
+                containerd:
+                  config: |
+                    ${indent(20, local.containerd_config)}
             EOT
           }
         ]
@@ -206,7 +197,7 @@ module "eks" {
 
         min_size                   = 0
         max_size                   = 30
-        desired_size               = 0
+        desired_size               = 1
 
         subnet_ids                 = module.vpc.private_subnets
 
@@ -224,20 +215,24 @@ module "eks" {
                   config:
                     maxPods: 110
                   flags:
-                    - --node-labels=WorkClass=big_compute,node.kubernetes.io/lifecycle=spot
+                    - --node-labels=WorkClass=compute,node.kubernetes.io/lifecycle=spot
+                    - --v=${var.kubelet_verbosity}
+                containerd:
+                  config: |
+                    ${indent(20, local.containerd_config)}
             EOT
           }
         ]
 
         labels = {
-          WorkClass                      = "big_compute"
+          WorkClass                      = "compute"
           "node.kubernetes.io/lifecycle" = "spot"
         }
 
         tags = {
           "k8s.io/cluster-autoscaler/enabled"                                 = "true"
           "k8s.io/cluster-autoscaler/${var.cluster_name}${local.name_suffix}" = "true"
-          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "big_compute"
+          "k8s.io/cluster-autoscaler/node-template/label/WorkClass"           = "compute"
         }
         block_device_mappings = {
           xvda = {
@@ -272,44 +267,6 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
   token                  = data.aws_eks_cluster_auth.cluster.token
 }
-
-
-# IAM role for EKS Node Groups
-#resource "aws_iam_role" "eks_nodegroup" {
-#  name = "${var.cluster_name}-nodegroup-role"
-#  assume_role_policy = data.aws_iam_policy_document.eks_node_assume_role.json
-#}
-
-data "aws_iam_policy_document" "eks_node_assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-# Attach required managed IAM policies
-#resource "aws_iam_role_policy_attachment" "worker_node_policy" {
-#  role       = aws_iam_role.eks_nodegroup.name
-#  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-#}
-
-#resource "aws_iam_role_policy_attachment" "cni_policy" {
-#  role       = aws_iam_role.eks_nodegroup.name
-#  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-#}
-
-#resource "aws_iam_role_policy_attachment" "ecr_policy" {
-#  role       = aws_iam_role.eks_nodegroup.name
-#  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-#}
-
-
 
 module "eks_aws_auth" {
   source  = "terraform-aws-modules/eks/aws//modules/aws-auth"
